@@ -1,7 +1,7 @@
 import express from "express"
 import routes from "./routes/index.js"
-import connectMongoDB from "./database/mongoose/connection/main.js"
-import handleconfigration from "./config/index.js"
+import connectMongoDB from "./database/mongoose/connection/index.connection.js"
+import handleconfigration from "./config/index.config.js"
 
 const app = express();
 const port = 3000;
