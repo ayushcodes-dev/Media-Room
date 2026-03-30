@@ -12,7 +12,7 @@ const connectMongoDB = async () => {
       dbName: "vidfly",
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`MongoDB Connected`);
   } catch (error) {
     console.error("Database connection failed:", error.message);
     process.exit(1); // stop app if DB fails
