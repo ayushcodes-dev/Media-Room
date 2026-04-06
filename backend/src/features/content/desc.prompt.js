@@ -76,3 +76,5 @@ OUTPUT FORMAT (STRICT JSON):
 }
   `
 }
+
+export default descPrompt
