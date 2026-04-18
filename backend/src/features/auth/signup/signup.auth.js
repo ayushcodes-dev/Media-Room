@@ -96,7 +96,7 @@ function authenticateInSession(req, user) {
     req.session.username = user.username;
     req.session.email = user.email;
     req.session.userID = user.userID;
-    req.isAuthenticated = true;
+    req.session.isAuthenticated = true;
 }
 async function HandleSignup(req, Data) {
     // finding user from mongodb

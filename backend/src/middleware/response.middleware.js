@@ -8,15 +8,15 @@ export const responseHandler = (req, res, next) => {
         meta = null
     } = {}) => {
         return res.status(statusCode).json({
-            success: true,
-            statusCode: statusCode,
-            error: {
-                status: false,
-                error: null
-            },
-            message: message,
-            data: {},
-            meta: meta
+          success: true,
+          statusCode: statusCode,
+          message: message,
+          data: data,
+          error: {
+            status: false,
+            error: null,
+          },
+          meta: meta,
         });
     };
 
@@ -30,12 +30,12 @@ export const responseHandler = (req, res, next) => {
         return res.status(statusCode).json({
             success: false,
             statusCode: statusCode,
+            message: message,
             error: {
                 status: true,
                 error: errors,
                 errorCode: errorCode
             },
-            message: message
         });
     };
 

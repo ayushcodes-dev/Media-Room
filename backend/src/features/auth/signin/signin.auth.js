@@ -70,7 +70,7 @@ function authenticateInSession(req, Data) {
     req.session.username = Data.username;
     req.session.email = Data.email;
     req.session.userID = Data.userID;
-    req.isAuthenticated = true;
+    req.session.isAuthenticated = true;
 }
 
 // Handles Signin
@@ -84,6 +84,7 @@ async function handleSignin(req, Data) {
     };
     // finding user from mongodb
     const user = await UserModel.findOne({ email: Data.email });
+  
     if (!user) {
         return response;
     }

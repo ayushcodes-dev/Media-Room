@@ -40,8 +40,8 @@ export const signinValidator = [
     .notEmpty().withMessage("Email is required")
     .isString().withMessage("Email must be a string")
     .trim()
-    .isEmail().withMessage("Invalid email format")
-    .normalizeEmail(),
+    .isEmail().withMessage("Invalid email format"),
+    
 
   // Password
   body("password")

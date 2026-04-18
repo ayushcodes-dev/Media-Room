@@ -31,7 +31,7 @@ async function sendSignupOTP(email, OTP) {
             <td align="center" style="padding:40px 20px 20px;">
               <div style="display:inline-block;background:linear-gradient(135deg, #38BDF8 0%, #6366F1 100%);padding:2px;border-radius:12px;">
                 <div style="background:#1E293B;padding:10px 20px;border-radius:10px;">
-                   <h1 style="margin:0;font-size:32px;font-weight:800;color:#38BDF8;letter-spacing:-1px;">
+                   <h1 style="margin:0;font-size:32px;font-weight:800;color: #38BDF8 ;letter-spacing:-1px;">
                     Vid<span style="color:#FFFFFF;">Fly</span>
                   </h1>
                 </div>
