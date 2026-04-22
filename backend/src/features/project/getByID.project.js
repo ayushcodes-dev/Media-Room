@@ -55,80 +55,27 @@ async function getProject(userID, projectID) {
     };
   }
 }
-// fuunction to get content
-async function getContent(userID, projectID) {
-  const content = await ContentModel.findOne({
-    userID: userID,
-    projectID: projectID,
-  });
-  if (!content) {
-    return {
-      success: false,
-      statusCode: 404,
-      message: "content not found",
-      errorCode: "CONTENT_NOT_FOUND",
-      errors: null,
-    };
-  }
-  return {
-    success: true,
-    statusCode: 200,
-    message: "successfully fetched content",
-    data: content,
-    errorCode: null,
-    errors: null,
-  };
-}
+
 
 // handles the req of get projectbyid. returns the project data
 async function getProjectById(req, projectID) {
   try {
-    const fetchData = await Promise.all(
-      [
-        getProject(req.session.userID, projectID),
-        getContent(req.session.userID, projectID),
-      ],
-      (error) => {
-        if (error) {
-          return {
-            success: false,
-            statusCode: 500,
-            message: "Internal Server Error",
-            errorCode: "INTERNAL_SERVER_ERROR",
-            errors: null,
-          };
-        }
-      },
-    );
-    const projectData = fetchData[0];
-    const contentData = fetchData[1];
-    if (!projectData.success) {
-      return projectData; // Return the error response from getProject
+    const project = await getProject(req.session.userID, projectID);
+  
+    if (!project.success) {
+      return project; // Return the error response from getProject
     }
-
-    if (!contentData.success) {
-      return contentData; // Return the error response from getProject
-    }
-
     return {
       success: true,
       statusCode: 200,
       message: "successfully fetched project data",
       data: {
-        projectData: {
-          projectID: projectData.data.projectID,
-          projectName: projectData.data.projectName,
-          contentStatus: projectData.data.contentStatus,
-          thumbnailStatus: projectData.data.thumbnailStatus,
-          description: projectData.data.description,
+          projectID:project.data.projectID,
+          projectName: project.data.projectName,
+          contentStatus: project.data.contentStatus,
+          thumbnailStatus: project.data.thumbnailStatus,
+          description: project.data.description,
         },
-        contentData: {
-          title: contentData.data.title,
-          description: contentData.data.description,
-          tags: contentData.data.tags,
-        },
-        
-      },
       errorCode: null,
       errors: null,
     };
