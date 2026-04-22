@@ -4,13 +4,13 @@ const projectSchema = new mongoose.Schema({
   userID: {
     type: String,
     required: true,
+    unique: true
   },
   projects: [
     {
       projectID: {
         type: String,
         required: true,
-        unique: true,
       },
       date: {
         type: Date,

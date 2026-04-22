@@ -8,6 +8,7 @@ import {
   getThumbnail,
   getProjectById,
   createProject,
+  deleteProject,
 } from "#/features/project/index.project.js";
 
 const router = express.Router();
@@ -36,7 +37,7 @@ router.post("/project", createProjectValidator, validate, async (req, res) => {
 router.get("/project", async (req, res) => {
   const startProject = req.query.startProject || 0;
   const limitProject = req.query.limitProject || 10;
-  console.log("startProject, limitProject:", startProject, limitProject);
+ 
   const projects = await getProjects(req, startProject, limitProject);
   if (projects.success) {
     return res.success({ ...projects });
@@ -54,6 +55,22 @@ router.get("/project", async (req, res) => {
 router.get("/project/:projectID", async (req, res) => {
   const projectID = req.params.projectID;
   const project = await getProjectById(req, projectID);
+ 
+  if (project.success) {
+    return res.success({ ...project });
+  } else {
+    return res.error({ ...project });
+  }
+});
+/**
+ * @route   DELETE /project/:projectID
+ * @desc    deleting project
+ * @access  Private
+ */
+
+router.delete("/project/:projectID", async (req, res) => {
+  const projectID = req.params.projectID;
+  const project = await deleteProject(req, projectID);
   console.log("project:", project);
   if (project.success) {
     return res.success({ ...project });
