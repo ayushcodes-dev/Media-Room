@@ -1,5 +1,6 @@
 import express from "express";
-import { createProjectValidator } from "#/validator/project.validator.js";
+import { createProjectValidator,
+  renameProjectValidator } from "#/validator/project.validator.js";
 import validate from "#/validator/index.validate.js";
 
 import {
@@ -85,7 +86,7 @@ router.delete("/project/:projectID", async (req, res) => {
  * @access  Private
  */
 
-router.patch("/project/:projectID/rename", async (req, res) => {
+router.patch("/project/:projectID/rename",renameProjectValidator,validate, async (req, res) => {
   const projectID = req.params.projectID;
   const newName = req.body.newName
   const project = await renameProject(req, {projectID,newName});
