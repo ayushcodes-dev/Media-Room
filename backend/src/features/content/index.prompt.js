@@ -84,11 +84,11 @@ ${descPrompt()}
     "data": ["tag",here is tags]
   },
   "thumbnailDescription": {
-    "data": "Clear structured thumbnail description with text, colors, emotions, layout"
+    "data": "Clear structured thumbnail description with text, colors, emotions, layout" write prompt to generate thumbnail . text must be easy readable , clear, profestional and realstic"
   } 
 }
 `;
-console.log(prompt)
+
 return prompt
 }
 

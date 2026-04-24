@@ -79,7 +79,7 @@ async function getProjectByName(req, Data) {
       errors: null,
     };
 
-    return { success: true, data: project.data };
+    
   } catch (error) {
     console.error("Error in getProjectById:", error);
     return {

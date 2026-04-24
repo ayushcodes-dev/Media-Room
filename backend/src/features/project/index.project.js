@@ -4,4 +4,15 @@ import getProjectById from "./getByID.project.js";
 import getContent from "./getContent.project.js";
 import getThumbnail from "./getThumbnail.project.js";
 import deleteProject from "./delete.project.js"
-export { createProject, getProjects, getProjectById , getContent, getThumbnail, deleteProject };
+import getProjectByName from "./getByName.project.js";
+import renameProject from "./rename.project.js"
+export {
+  createProject,
+  getProjects,
+  getProjectById,
+  getContent,
+  getThumbnail,
+  deleteProject,
+  getProjectByName,
+  renameProject,
+};

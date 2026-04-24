@@ -67,13 +67,6 @@ E. HASHTAGS
 - First 2 lines must be highly engaging
 
 -----------------------------------
-OUTPUT FORMAT (STRICT JSON):
-
-{
-  "hook": "",
-  "description": "",
-  "hashtags": ["", "", "", ""]
-}
   `
 }
 

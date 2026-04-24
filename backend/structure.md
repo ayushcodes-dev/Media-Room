@@ -35,11 +35,9 @@
 - > ~~create project - take project name~~
 - > ~~get all projects~~
 - > ~~get project by id~~
-- > get content 
-- > get thumbnail
-- > save vedieo description 
-- > delete project 
-- > rename project
+- > save video description 
+- > ~~delete project~~
+- > ~~rename project~~
 
 <h2 style="color:#9B870C
 ">Profile setup </h2>

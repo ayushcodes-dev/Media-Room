@@ -30,16 +30,15 @@ STEP-BY-STEP PROCESS:
 - Analyze top-performing videos related to this topic (high views category).
 - Extract 20–30 COMMON PATTERNS:
   - Title structures
-  - Power words (e.g., “secret”, “mistake”, “truth”, “free”)
-  - Numbers usage
+  - use Power words (e.g., “secret”, “mistake”, “truth”, “free”)
+  - use words that feel them guilty, fear, mistake, or make them shock
   - Emotional triggers
   - Curiosity gaps
   - Length of title
-  - Use of brackets (e.g., “(Step-by-step)”)
 
 4. APPLY INSIGHTS
 - Combine:
-  - Creator’s content
+  - Creators content
   - Audience psychology
   - Viral patterns
 - Create titles that:

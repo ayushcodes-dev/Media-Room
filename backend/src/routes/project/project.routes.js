@@ -9,6 +9,7 @@ import {
   getProjectById,
   createProject,
   deleteProject,
+  renameProject,
 } from "#/features/project/index.project.js";
 
 const router = express.Router();
@@ -71,13 +72,30 @@ router.get("/project/:projectID", async (req, res) => {
 router.delete("/project/:projectID", async (req, res) => {
   const projectID = req.params.projectID;
   const project = await deleteProject(req, projectID);
-  console.log("project:", project);
+  
   if (project.success) {
     return res.success({ ...project });
   } else {
     return res.error({ ...project });
   }
 });
+/**
+ * @route   DELETE /project/:projectID/rename
+ * @desc    rename project
+ * @access  Private
+ */
+
+router.patch("/project/:projectID/rename", async (req, res) => {
+  const projectID = req.params.projectID;
+  const newName = req.body.newName
+  const project = await renameProject(req, {projectID,newName});
+  if (project.success) {
+    return res.success({ ...project });
+  } else {
+    return res.error({ ...project });
+  }
+});
+
 
 /**
  * @route   GET /project/:projectID/content
