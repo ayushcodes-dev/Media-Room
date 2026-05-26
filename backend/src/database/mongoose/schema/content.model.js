@@ -8,6 +8,7 @@ const contentSchema = new mongoose.Schema({
   projectID: {
     type: String,
     required: true,
+    unique: true
   },
   title: {
     type: String,

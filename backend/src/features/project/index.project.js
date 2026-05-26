@@ -6,6 +6,8 @@ import getThumbnail from "./getThumbnail.project.js";
 import deleteProject from "./delete.project.js"
 import getProjectByName from "./getByName.project.js";
 import renameProject from "./rename.project.js"
+import saveVideoDesc from "./saveVideoDesc.project.js"
+import saveCustomPrompt from "./saveCustomPrompt.project.js"
 export {
   createProject,
   getProjects,
@@ -15,4 +17,6 @@ export {
   deleteProject,
   getProjectByName,
   renameProject,
+  saveVideoDesc,
+  saveCustomPrompt,
 };

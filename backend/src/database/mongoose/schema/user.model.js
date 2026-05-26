@@ -5,13 +5,13 @@ const userSchema = new mongoose.Schema(
     userID: {
       type: String,
       required: true,
+      unique: true,
     },
     username: {
       type: String,
       required: true,
       trim: true,
     },
-
     email: {
       type: String,
       required: true,
@@ -20,11 +20,15 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function () {
-        return this.signup === true;
+        if(this.signup === true|| this.role=== "admin") return true;
       },
       minlength: 6,
     },
-
+    role:{
+      type: String,
+      deafult: "user",
+      enum:["user","admin"]
+    },
     isAuthenticated: {
       type: Boolean,
       default: false,

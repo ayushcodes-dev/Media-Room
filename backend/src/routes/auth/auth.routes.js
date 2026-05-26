@@ -7,14 +7,14 @@ import validate from "#/validator/index.validate.js";
 import handleSignup from "#/features/auth/signup/signup.auth.js";
 import handleSignin from "#/features/auth/signin/signin.auth.js";
 import handleSignout from "#/features/auth/signout/signout.auth.js";
-import handleStatus from "#/features/auth/status/status.auth.js";
+//import handleStatus from "#/features/auth/status/status.auth.js"; import handleUserAuth_middle from "#/middleware/auth.middleware.js";
 const router = express.Router();
 /**
  * @route   POST /auth/signin
  * @desc    signin route
  * @access  Public
  */
-router.post("/auth/signin", signinValidator,validate, async (req, res) => {
+router.post("/auth/signin", signinValidator, validate, async (req, res) => {
   const body = req.body;
 
   const Data = {
@@ -65,26 +65,7 @@ router.post("/auth/signup", signupValidator, validate, async (req, res) => {
  * @desc    signin route
  * @access  Private
  */
-router.post("/auth/signout",async (req, res) => {
-  const signout = await handleSignout(req);
-  if (signout.success) {
-    res.success({
-      ...signout,
-    });
-  } else {
-    res.error({
-      ...signout,
-    });
-  }
-});
-
-
-/**
- * @route   POST /auth/signout
- * @desc    signin route
- * @access  Private
- */
-router.post("/auth/signout",async (req, res) => {
+router.post("/auth/signout", async (req, res) => {
   const signout = await handleSignout(req);
   if (signout.success) {
     res.success({
@@ -115,10 +96,5 @@ router.get("/auth/status", async (req, res) => {
     });
   }
 });
-
-
-
-
-
 
 export default router;

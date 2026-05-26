@@ -1,6 +1,10 @@
 import express from "express";
-import { createProjectValidator,
-  renameProjectValidator } from "#/validator/project.validator.js";
+import {
+  createProjectValidator,
+  renameProjectValidator,
+  saveVideoDescValidator,
+  saveCustomPromptValidator,
+} from "#/validator/project.validator.js";
 import validate from "#/validator/index.validate.js";
 
 import {
@@ -11,6 +15,8 @@ import {
   createProject,
   deleteProject,
   renameProject,
+  saveVideoDesc,
+  saveCustomPrompt,
 } from "#/features/project/index.project.js";
 
 const router = express.Router();
@@ -39,7 +45,7 @@ router.post("/project", createProjectValidator, validate, async (req, res) => {
 router.get("/project", async (req, res) => {
   const startProject = req.query.startProject || 0;
   const limitProject = req.query.limitProject || 10;
- 
+
   const projects = await getProjects(req, startProject, limitProject);
   if (projects.success) {
     return res.success({ ...projects });
@@ -57,7 +63,7 @@ router.get("/project", async (req, res) => {
 router.get("/project/:projectID", async (req, res) => {
   const projectID = req.params.projectID;
   const project = await getProjectById(req, projectID);
- 
+
   if (project.success) {
     return res.success({ ...project });
   } else {
@@ -73,7 +79,7 @@ router.get("/project/:projectID", async (req, res) => {
 router.delete("/project/:projectID", async (req, res) => {
   const projectID = req.params.projectID;
   const project = await deleteProject(req, projectID);
-  
+
   if (project.success) {
     return res.success({ ...project });
   } else {
@@ -86,17 +92,65 @@ router.delete("/project/:projectID", async (req, res) => {
  * @access  Private
  */
 
-router.patch("/project/:projectID/rename",renameProjectValidator,validate, async (req, res) => {
-  const projectID = req.params.projectID;
-  const newName = req.body.newName
-  const project = await renameProject(req, {projectID,newName});
-  if (project.success) {
-    return res.success({ ...project });
-  } else {
-    return res.error({ ...project });
-  }
-});
+router.patch(
+  "/project/:projectID/rename",
+  renameProjectValidator,
+  validate,
+  async (req, res) => {
+    const projectID = req.params.projectID;
+    const newName = req.body.newName;
+    const project = await renameProject(req, { projectID, newName });
+    if (project.success) {
+      return res.success({ ...project });
+    } else {
+      return res.error({ ...project });
+    }
+  },
+);
 
+/**
+ * @route   POST /project/:projectID/videoDescription
+ * @desc    save video description
+ * @access  Private
+ */
+
+router.post(
+  "/project/:projectID/videoDescription",
+  saveVideoDescValidator,
+  validate,
+  async (req, res) => {
+    const projectID = req.params.projectID;
+    const desc = req.body.description;
+    const saveDesc = await saveVideoDesc(req, { projectID, desc });
+    if (saveDesc.success) {
+      return res.success({ ...saveDesc });
+    } else {
+      return res.error({ ...saveDesc });
+    }
+  },
+);
+
+/**
+ * @route   POST /project/:projectID/customPrompt
+ * @desc    save custom Prompt
+ * @access  Private
+ */
+
+router.post(
+  "/project/:projectID/customPrompt",
+  saveCustomPromptValidator,
+  validate,
+  async (req, res) => {
+    const projectID = req.params.projectID;
+    const prompt = req.body.prompt;
+    const savePrompt = await saveCustomPrompt(req, { projectID, prompt });
+    if (savePrompt.success) {
+      return res.success({ ...savePrompt });
+    } else {
+      return res.error({ ...savePrompt });
+    }
+  },
+);
 
 /**
  * @route   GET /project/:projectID/content
@@ -113,7 +167,6 @@ router.get("/project/:projectID/content", async (req, res) => {
   } else {
     return res.error({ ...project });
   }
-
 });
 
 /**
@@ -131,10 +184,7 @@ router.get("/project/:projectID/thumbnail", async (req, res) => {
   } else {
     return res.error({ ...thumbnail });
   }
-
 });
-
-
 
 /**
  * @route   POST /project/

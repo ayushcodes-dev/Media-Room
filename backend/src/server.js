@@ -18,14 +18,6 @@ async function startServer() {
   dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
   /**
-   * @desc  handles all configration
-   */
-  handleconfigration();
-  /**
-   * @desc Enable To Read Json
-   */
-  app.use(express.json());
-  /**
    * @desc Enable CORS (Cross-Origin Resource Sharing)
    */
   app.use(
@@ -34,6 +26,16 @@ async function startServer() {
       credentials: true,
     }),
   );
+
+  /**
+   * @desc  handles all configration
+   */
+  handleconfigration();
+
+  /**
+   * @desc Enable To Read Json
+   */
+  app.use(express.json());
   /**
    * description : middleware to parse cookie into json
    */

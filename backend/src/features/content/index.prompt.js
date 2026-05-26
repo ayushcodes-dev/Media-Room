@@ -47,6 +47,8 @@ const prompt= `
 7. Do NOT add new fields.
 8. Do NOT rename fields.
 9. Do NOT change structure.
+10. return data in json string format 
+
 
 ========================
 INPUT
@@ -75,16 +77,16 @@ ${descPrompt()}
 ========================
 {
   "title": {
-    "data": "here is title"
+    "data": ""
   },
   "description": {
-    "data": "here is description"
+    "data": ""
   },
   "tags": {
-    "data": ["tag",here is tags]
+    "data": [""]
   },
   "thumbnailDescription": {
-    "data": "Clear structured thumbnail description with text, colors, emotions, layout" write prompt to generate thumbnail . text must be easy readable , clear, profestional and realstic"
+    "data": ${`Clear structured thumbnail description with text, colors, emotions, layout write prompt to generate thumbnail . text must be easy readable , clear, profestional and realstic`}
   } 
 }
 `;

@@ -44,7 +44,7 @@ STEP-BY-STEP PROCESS:
   - Slight variations (synonyms)
 
 5. STRICT RULES
-- Total tags: 15–25 only
+- Total tags: 5-10 only
 - Each tag must be:
   - Lowercase
   - No special characters (except spaces)

@@ -71,6 +71,7 @@ function authenticateInSession(req, Data) {
     req.session.email = Data.email;
     req.session.userID = Data.userID;
     req.session.isAuthenticated = true;
+    req.session.role = Data.role
 }
 
 // Handles Signin
@@ -114,12 +115,21 @@ async function handleSignin(req, Data) {
             errors: null
         };
     }
+    // authenticating user in session
     Data.userID = user.userID;
+    Data.role= user.role
     authenticateInSession(req, Data);
     return {
         success: true,
         statusCode: 200,
-        message: "Signin Successfully"
+        message: "Signin Successfully",
+        data:{
+            userID: user.userID,
+            email: user.email,
+            username: user.username,
+            isAuthenticated: true,
+            role:user.role
+        }
     };
 }
 

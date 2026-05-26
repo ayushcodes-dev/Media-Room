@@ -22,11 +22,9 @@ async function createUser(Data) {
 // function to creare user or update user that user is authenticated with google
 async function authenticateUserInDB(userData) {
   try {
-    
     const result = await UserModel.findOneAndUpdate(
       { userID: userData.userID },
       {
-
         $set: {
           isAuthenticated: true,
           oAuth: { status: true, provider: "google" },
@@ -41,8 +39,7 @@ async function authenticateUserInDB(userData) {
         upsert: true,
       },
     );
-   
-    
+
     if (!result) {
       return false;
     } else {
@@ -92,7 +89,7 @@ if (user.aud !== process.env.GOOGLE_CLIENT_ID) {
   } catch (error) {
     return {
       success: false,
-      data: null, 
+      data: null,
       message: "Failed to authenticate with Google",
       errorCode: "GOOGLE_USER_DATA_FETCH_FAILED",
       errors: error,
@@ -105,23 +102,24 @@ function authenticateInSession(req, user) {
   req.session.email = user.email;
   req.session.userID = user.userID;
   req.session.isAuthenticated = true;
+  req.session.role = "user";
   return true;
 }
 
 async function handleGoogleCallback(req) {
   const code = req.query.code;
-let tokenRes;
+  let tokenRes;
+
   try {
-  
     // exchanging code for access token
     const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
       code: code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: process.env.BASE_URL + "/oAuth/callback/google",
+      redirect_uri: process.env.FRONTEND_BASE_URL + "/oAuth/callback/google",
       grant_type: "authorization_code",
     });
-      
+
     const access_token = tokenRes.data.access_token;
 
     // if access token is not received
@@ -146,7 +144,7 @@ let tokenRes;
         errors: null,
       };
     }
-  
+
     // finding user in database
     const user = await UserModel.findOne({ email: userData.data.email });
 
@@ -170,9 +168,12 @@ let tokenRes;
         };
       }
     }
-  
-    const authenticateDB = await authenticateUserInDB({...userData.data, userID: user ? user.userID : userID});
-    
+
+    const authenticateDB = await authenticateUserInDB({
+      ...userData.data,
+      userID: user ? user.userID : userID,
+    });
+
     if (!authenticateDB) {
       return {
         success: false,
@@ -182,20 +183,25 @@ let tokenRes;
         errors: null,
       };
     }
-     
+
     // authenticate user in session
     const authenticateSession = authenticateInSession(req, {
       ...userData.data,
       userID: user ? user.userID : userID,
     });
-    console.log(req.session);
-     return {
-       success: true,
-       statusCode: 200,
-       message: "User authenticated successfully with Google",
-       errorCode: null,
-       errors: null,
-     };
+
+    return {
+      success: true,
+      statusCode: 200,
+      message: "User authenticated successfully with Google",
+      data: {
+        ...userData.data,
+        userID: user ? user.userID : userID,
+        username: userData.data.name,
+        isAuthenticated: true,
+        role: "user",
+      },
+    };
   } catch (error) {
     console.log(error);
     return {

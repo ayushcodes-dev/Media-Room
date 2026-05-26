@@ -4,7 +4,7 @@ const projectSchema = new mongoose.Schema({
   userID: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   projects: [
     {
@@ -30,7 +30,10 @@ const projectSchema = new mongoose.Schema({
         enum: ["pending", "processing", "completed", "failed", "unbegun"],
         default: "unbegun", // pending, processing, completed, failed, unbegun
       },
-      description: {
+      videoDescription: {
+        type: String,
+      },
+      customPrompt: {
         type: String,
       },
     },

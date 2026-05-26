@@ -1,7 +1,7 @@
 function handleGoogleSignin(req) {
-  
+  console.log("request for google signin",);
   const client_id = process.env.GOOGLE_CLIENT_ID;
-  const redirect_uri = process.env.BASE_URL + "/oAuth/callback/google";
+  const redirect_uri = process.env.FRONTEND_BASE_URL + "/oAuth/callback/google";
 
   const url =
     `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -14,8 +14,10 @@ function handleGoogleSignin(req) {
     success: true,
     statusCode: 200,
     message: "Google signin url generated successfully",
-    redirect_url: url,
-    redirect: true,
+    data: {
+      redirect_url: url,
+      redirect: true,
+    }
   };
 }
 

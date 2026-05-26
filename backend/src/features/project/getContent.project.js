@@ -2,7 +2,7 @@ import { ContentModel } from "#/database/mongoose/schema/index.model.js";
 
 // fuunction to get content
 async function getContent(req, projectID) {
-  const userID = req.user.id;
+  const userID = req.userID;
   try {
     const content = await ContentModel.findOne({
       userID: userID,

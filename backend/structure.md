@@ -26,7 +26,6 @@
 
 - > content generation - tittles, hashtags and description
 - > thumbnail generation - img with hugging face api
-- > regenerate - content and thumbnail
 - > custom promot (optional)
 
 <h2 style="color:#9B870C
@@ -58,8 +57,8 @@
 <h2 style="color:#9B870C
 ">admin</h2>
 
-- > takes admin name
-- > very short time token ex for 6 hour
+- > takes admin email and password to authenticate
+- > very short time token ex for 24 hour
 - > add plans and customize plans 
 - > change api keys 
 - > admin auth in signin
@@ -75,12 +74,6 @@
 
 <h2 style="color:#9B870C
 "></h2>
-
-
-
-
-
-
 
 
 

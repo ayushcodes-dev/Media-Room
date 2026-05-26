@@ -11,11 +11,15 @@ const router = express.Router();
  */
 router.get("/oAuth/signin/google", async (req, res) => {
   const googleSignin = await handleGoogleSignin(req);
-  if (googleSignin.success && googleSignin.redirect) {
-    res.redirect(googleSignin.redirect_url);
+  if (googleSignin.success) {
+    res.success({
+      ...googleSignin,
+    });
   } else {
     res.error({
-      ...googleSignin,
+      success: false,
+      statusCode: 500,
+      message: "Failed to login with google",
     });
   }
 });
@@ -34,11 +38,13 @@ router.get("/oAuth/callback/google", async (req, res) => {
     if (googleCallback.redirect) {
       res.redirect(googleCallback.redirect_url);
     } else {
+     
       res.success({
         ...googleCallback,
       });
     }
   } else {
+    
     res.error({
       ...googleCallback,
     });

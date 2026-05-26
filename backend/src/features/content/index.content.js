@@ -1,115 +1,47 @@
-import getPrompt from "./index.prompt.js"
-import {
-  GoogleGenAI
-} from "@google/genai";
+import getPrompt from "./index.prompt.js";
+import { GoogleGenAI } from "@google/genai";
 import { OpenAI } from "openai";
-import { createXai } from "@ai-sdk/xai";
-import { generateText } from "ai";
 
-const API_KEY = process.env.GEMINI_API_KEY;
-
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
-
-async function GeminiGenerateContent(userInput) {
-
+import {
+  ProjectModel,
+  ContentModel,
+} from "#/database/mongoose/schema/index.model.js";
+// generating content using gemini api
+async function GeminiGenerateContent(prompt) {
   try {
-    if (!userInput) {
-      throw new Error("Invalid User Input");
-    }
-    const prompt = getPrompt(userInput);
+    const API_KEY = process.env.GEMINI_API_KEY;
 
-    if (!prompt || typeof prompt !== "string") {
-      throw new Error("Invalid prompt provided");
-    }
+    const BASE_URL =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
     const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
-    
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-      });
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
-      const rawText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error("No response from Gemini");
-      }
-      const cleanText = rawText
+    const rawText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      throw new Error("No response from Gemini");
+    }
+    const cleanText = rawText
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-      const data = JSON.parse(cleanText);
+    const data = JSON.parse(cleanText);
 
-      return data;
-
-    
-
-    }
-
-   catch (error) {
+    return data;
+  } catch (error) {
     console.error("Gemini Service Error:", error.message);
     throw new Error("Failed to generate content");
   }
 }
 
-async function xAiGenerateContent(userInput){
-try {
-  if (!userInput) {
-    throw new Error("Invalid User Input");
-  }
-  const prompt = getPrompt(userInput);
-
-  if (!prompt || typeof prompt !== "string") {
-    throw new Error("Invalid prompt provided");
-  }
-console.log(process.env.XAI_API_KEY);
-  const xai = createXai({
-    apiKey: process.env.XAI_API_KEY,
-  });
-
-  const response = await generateText({
-    model: xai("grok-4.20-reasoning"), // ✅ correct way
-    system: "You are a helpful AI assistant.",
-    prompt: "What is the meaning of life?",
-  });
-
-  console.log(response.text); // ✅ correct
-  console.log("response  ", response);
-  const rawText = response.text;
-  // const rawText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawText) {
-    throw new Error("No response from xAi");
-  }
-  /*
-  const cleanText = rawText
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
-
-  const data = JSON.parse(cleanText);
-*/
-  return rawText;
-} catch (error) {
-  console.error("xAi Service Error:", error);
-  throw new Error("Failed to generate content");
-}
-
-
-
-}
-
-async function huggingGenerateContent(userInput){
+//. genertating content using hugging face api
+async function huggingface(prompt) {
   try {
-    if (!userInput) {
-      throw new Error("Invalid User Input");
-    }
-    const prompt = getPrompt(userInput);
-
-    if (!prompt || typeof prompt !== "string") {
-      throw new Error("Invalid prompt provided");
-    }
-    console.log(process.env.XAI_API_KEY);
     const client = new OpenAI({
       baseURL: "https://router.huggingface.co/v1",
       apiKey: process.env.HUGGING_FACE_API_KEY,
@@ -124,26 +56,235 @@ async function huggingGenerateContent(userInput){
         },
       ],
     });
-    const rawText = chatCompletion.choices[0].message.content
-    console.log("data fetched")
-    console.log(chatCompletion.choices[0].message);
-    // const rawText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) {
+    const rawContent = chatCompletion.choices[0].message.content;
+
+    if (!rawContent) {
       throw new Error("No response from xAi");
     }
-    
-  const cleanText = rawText
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
+    const cleanContent = rawContent
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
-  const data = JSON.parse(cleanText);
-
-    return data;
+    const contentData = JSON.parse(cleanContent);
+    return {
+      success: true,
+      statusCode: 500,
+      message: "successfully got content ",
+      error: null,
+      data: {
+        content: contentData,
+        reasoning_content: chatCompletion.choices[0].message.reasoning_content,
+      },
+    };
   } catch (error) {
-    console.error("xAi Service Error:", error);
-    throw new Error("Failed to generate content");
+    console.log("error in hugging face gen content ", error);
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
   }
-
 }
-export default huggingGenerateContent;
+//. genertating content using my deployed gemini ai api
+async function mygeminiservice(prompt) {
+  try {
+    const res = await fetch(
+      "https://api-service-d2wo.onrender.com/api/gemini/gen",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+        }),
+      },
+    );
+    if (!res) {
+      return {
+        success: false,
+        statusCode: 500,
+        message: "failed to fetch data",
+        errorCode: "FAILED_TO_FETCH",
+        errors: null,
+      };
+    }
+    if(!res.ok){
+      console.log("Error from Gemini service:", res);
+      return {
+        success: false,
+        statusCode: 500,
+        message: "failed to fetch data",
+        errorCode: "FAILED_TO_FETCH",
+        errors: null,
+      };
+    }
+    const data = await res.json();
+
+    if (!data.data) {
+      console.log("Invalid response from Gemini service:", data);
+      return {
+        success: false,
+        statusCode: 500,
+        message: "failed to fetch data",
+        errorCode: "FAILED_TO_FETCH",
+        errors: null,
+      };
+    }
+
+    return {
+      success: true,
+      statusCode: 500,
+      message: "successfully got content ",
+      error: null,
+      data: {
+        content: data.data,
+        reasoning_content: null,
+      },
+    };
+  } catch (error) {
+    console.log("error in local gemii gen content ", error);
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
+  }
+}
+// chnages status of project in project collection
+async function changeProjectStatus(userID, Data) {
+  console.log(userID, Data);
+  try {
+    const result = await ProjectModel.updateOne(
+      {
+        userID,
+        "projects.projectID": Data.projectID,
+      },
+      {
+        $set: {
+          "projects.$.contentStatus": Data.contentStatus,
+        },
+      },
+    );
+
+    if (result.matchedCount === 0 || result.modifiedCount === 0) {
+       console.error("error in change project status", result);
+      return {
+        success: false,
+        statusCode: 404,
+        message: "Failed to change project status",
+        errorCode: "FAILED_TO_UPDATE",
+        errors: null,
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: "successfully updated status",
+      errorCode: null,
+      errors: null,
+    };
+  } catch (error) {
+    console.error("error in change project status", error);
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
+  }
+}
+
+//create content in content collection
+async function storeContent(userID, projectID, Data) {
+  try {
+    const user = new ContentModel({
+      userID,
+      projectID,
+      title: Data.title.data,
+      description: Data.description.data,
+      tags: Data.tags.data,
+    });
+    await user.save();
+    return {
+      success: true,
+      statusCode: 201,
+      message: "Content created successfully",
+    };
+  } catch (error) {
+    console.log("error in creating new content", error);
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
+  }
+}
+
+async function generateContent(req, Data) {
+  const userID = req.session.userID;
+  const { customPrompt, projectID } = Data;
+  try {
+    const vedieoDesc = `my vedieo is about web dev roadmap ensures that it is not old and future proof I suggest them to learn mern for next step learn nextjs I told every parts in  detail whatlearner have to do`;
+    // changing project status to processing
+    const change = await changeProjectStatus(userID, {
+      projectID,
+      contentStatus: "processing",
+    });
+    if (!change.success) throw new Error("Failed to update status");
+    const prompt = getPrompt(vedieoDesc);
+    if (!prompt || typeof prompt !== "string") {
+      throw new Error("Invalid prompt provided");
+    }
+    // getting content
+    const content = await mygeminiservice(prompt);
+    if (!content.success) {
+      throw new Error("Failed to fetch data");
+    }
+    // creating content in db
+
+    const created = await storeContent(userID, projectID, {
+      title: content.data.content.title,
+      description: content.data.content.description,
+      tags: content.data.content.tags,
+    });
+    if (created.success) {
+      // changing project status to processing
+      const change = await changeProjectStatus(userID, {
+        projectID,
+        contentStatus: "completed",
+      });
+      if (!change.success) throw new Error("Failed to update status");
+      return {
+        success: true,
+        statusCode: 200,
+        message: "successfully created content",
+        data: content.data.content,
+      };
+    }
+  } catch (error) {
+    console.error("generate Error:", error);
+    // changing project status to failed
+    const change = await changeProjectStatus(userID, {
+      projectID,
+      contentStatus: "failed",
+    });
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
+  }
+}
+
+export default generateContent;
