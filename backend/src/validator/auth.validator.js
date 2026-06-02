@@ -16,8 +16,8 @@ export const signupValidator = [
   // Password
   body("password")
     .notEmpty().withMessage("Password is required")
-    .isLength({ min: 3, max: 32 })
-    .withMessage("Password must be between 3 to 32 characters"),
+    .isLength({ min: 6, max: 32 })
+    .withMessage("Password must be between 6 to 32 characters"),
 
   // OTP (optional but if present must be 6 digit number)
   body("OTP")
@@ -48,5 +48,5 @@ export const signinValidator = [
     .notEmpty().withMessage("Password is required")
     .isString().withMessage("Password must be a string")
     .trim()
-    .isLength({ min: 6 }).withMessage("Password must be at least 6 characters long")
+    
 ];

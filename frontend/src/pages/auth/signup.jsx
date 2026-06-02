@@ -1,22 +1,29 @@
-import { useRef } from "react";
+
 import { Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
 import InputField from "@/component/input/input1";
 import GlassCard from "@/component/cards/glassCard";
 import NeonButton from "@/component/button/neonButton";
-import { useAuth } from "@/hooks/useAuth.jsx";
+
 /**
  * FEATURE COMPONENTS
  */
 
-const SignUpForm = ({ onSwitch, onSignUp }) =>{
-  // username, email, password, OTPsended ,OTP, setUser } making its ref
-  const usernameRef = useRef();
-  const emailRef = useRef();
-  const passwordRef = useRef();
-  const confirmPasswordRef = useRef();  
-  const { setUser } = useAuth();
+const SignUpForm = ({
+  onSwitch,
+  onSignUp,
+  username,
+  setUsername,
+  email,
+  setEmail,
+  password,
+  setPassword,
+  confirmPassword,
+  setConfirmPassword,
+}) => {
+  
+ 
   return (
-    <GlassCard>
+    <GlassCard className="p-10 w-md">
       <h2 className="text-3xl font-black mb-2 tracking-tight font-orbitron uppercase">
         Sign Up
       </h2>
@@ -28,7 +35,8 @@ const SignUpForm = ({ onSwitch, onSignUp }) =>{
         icon={Mail}
         type="text"
         placeholder="Enter your your name"
-        ref={usernameRef}
+        state={username}
+        setState={setUsername}
         id="name"
         autoComplete="name"
       />
@@ -37,7 +45,8 @@ const SignUpForm = ({ onSwitch, onSignUp }) =>{
         icon={Mail}
         type="email"
         placeholder="name@example.com"
-        ref={emailRef}
+        state={email}
+        setState={setEmail}
         id="email"
         autoComplete="email"
       />
@@ -45,33 +54,25 @@ const SignUpForm = ({ onSwitch, onSignUp }) =>{
         label="Password"
         icon={Lock}
         type="password"
-     id="password"
+        id="password"
         autoComplete="password"
         placeholder="Create a strong password"
-        ref={passwordRef}
+        state={password}
+        setState={setPassword}
       />
       <InputField
         label="Confirm Password"
         icon={ShieldCheck}
         type="password"
-       id="confirm-password"
+        id="confirm-password"
         autoComplete="password"
         placeholder="Re-enter your password"
-        ref={confirmPasswordRef}
+        state={confirmPassword}
+        setState={setConfirmPassword}
       />
 
       <div className="mt-10">
-        <NeonButton
-          onClick={() =>
-            onSignUp({
-              username: usernameRef.current.value,
-              email: emailRef.current.value,
-              password: passwordRef.current.value,
-              confirmPassword: confirmPasswordRef.current.value,
-              setUser,
-            })
-          }
-        >
+        <NeonButton onClick={() => onSignUp()}>
           VERIFY EMAIL <ArrowRight size={20} strokeWidth={3} />
         </NeonButton>
       </div>
@@ -87,6 +88,6 @@ const SignUpForm = ({ onSwitch, onSignUp }) =>{
       </p>
     </GlassCard>
   );
-}
+};
 
 export default SignUpForm;

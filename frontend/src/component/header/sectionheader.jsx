@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+
 /**
  * REUSABLE SECTION HEADER
  * @param {string} title - The main heading text

@@ -1,5 +1,5 @@
-import { Menu, X, Tv } from "lucide-react";
-
+import { Menu, X } from "lucide-react";
+import AppTextLogo from "@/component/logo/app.logo";
 const APP_CONFIG = {
   name: "TubeNix",
   theme: {
@@ -23,13 +23,11 @@ function Header3({ isSidebarOpen, setIsSidebarOpen }) {
       {/* LEFT: Branding & SEO Friendly Logo */}
       <div className="flex items-center gap-3 group cursor-pointer">
         <div
-          className={`w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center ${APP_CONFIG.theme.glowColor} border border-sky-400/30 transition-transform group-hover:scale-105 duration-300`}
+          className={`w-9 h-9 rounded-sm  flex items-center justify-center  transition-transform group-hover:scale-105 duration-300`}
         >
-          <Tv className="w-5 h-5 text-white" />
+         <img src="/appLogo.png" className="rounded-xl"/>
         </div>
-        <span className="text-lg font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-sky-400 bg-clip-text text-transparent">
-          {APP_CONFIG.name}
-        </span>
+        <AppTextLogo fontSize="text-3xl" />
       </div>
 
       {/* RIGHT: Menu Interaction */}

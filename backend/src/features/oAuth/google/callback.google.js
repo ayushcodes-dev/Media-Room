@@ -144,7 +144,7 @@ async function handleGoogleCallback(req) {
         errors: null,
       };
     }
-
+   
     // finding user in database
     const user = await UserModel.findOne({ email: userData.data.email });
 
@@ -185,7 +185,7 @@ async function handleGoogleCallback(req) {
     }
 
     // authenticate user in session
-    const authenticateSession = authenticateInSession(req, {
+   authenticateInSession(req, {
       ...userData.data,
       userID: user ? user.userID : userID,
     });
@@ -203,7 +203,7 @@ async function handleGoogleCallback(req) {
       },
     };
   } catch (error) {
-    console.log(error);
+   // console.log(error);
     return {
       success: false,
       statusCode: 500,

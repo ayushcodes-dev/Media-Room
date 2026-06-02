@@ -4,7 +4,9 @@ import SignUpForm from "./signup";
 import VerificationForm from "./email_verification";
 import Header from "@/component/header/header2";
 import { useLocation, useNavigate } from "react-router-dom";
-import { signin, signup, signin_with_provider } from "@/api/auth";
+import { onSignin, onSigninWithProvider } from "@/features/auth/signin.auth.js";
+import { onSignup} from "@/features/auth/signup.auth.js";
+import { handleVerification } from "@/features/auth/email_verification.auth.js";
 import NeonLoader from "@/component/loader/loader1";
 import Toaster1 from "@/component/toaster/toaster1";
 import { useAuth } from "@/hooks/useAuth.jsx";
@@ -13,12 +15,19 @@ import { useAuth } from "@/hooks/useAuth.jsx";
  */
 export default function Auth() {
   const [loading, setLoading] = useState(false);
-  const [otp, setOtp] = useState(new Array(6).fill(""));
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [toasterData, setToasterData] = useState([]);
   const { user, setUser } = useAuth();
+
+  // forrm data
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  const [otp, setOtp] = useState(new Array(6).fill(""));
   // Injecting Google Fonts
 
   const handleOtpChange = (element, index) => {
@@ -36,179 +45,9 @@ export default function Auth() {
     setTimeout(() => {
       setLoading(false);
       navigate(`/${newView}`);
-    }, 350);
+    }, 50);
   };
-  const onSignin = async ({ email, password, setUser }) => {
-    setIsLoading(true);
-    const data = await signin(email, password);
-    setIsLoading(false);
-    if (!data.success) {
-      if (data.error.error?.errorCode === "VALIDATION_ERROR") {
-        const messages = data.error.error.error
-          .map((detail) => detail.msg)
-          .join(".\n");
-        setToasterData([
-          {
-            status: "error",
-            info: messages,
-            duration: 9000,
-          },
-        ]);
-        return;
-      }
-      setToasterData([
-        {
-          status: "error",
-          info: data.error.message,
-          duration: 7000,
-        },
-      ]);
-      return;
-    }
-    setToasterData([
-      {
-        status: "success",
-        info: "Signed in successfully!",
-        // align: "bottom-right",
-      },
-    ]);
-    
-    const userdata = {
-      userID: data.data.userID,
-      email: data.data.email,
-      username: data.data.username,
-      isAuthenticated: data.data.isAuthenticated,
-      role: data.data.role,
-    };
-    setUser(userdata);
-    sessionStorage.setItem("user_auth", JSON.stringify(userdata));
-    navigateTo("/dashboard");
-  };
-  const onSignup = async ({ username, email, password, confirmPassword }) => {
-    setIsLoading(true);
-    if (password !== confirmPassword) {
-      setIsLoading(false);
-      setToasterData([
-        {
-          status: "error",
-          info: "Passwords do not match!",
-          duration: 7000,
-        },
-      ]);
-      return;
-    }
-    const data = await signup({
-      username,
-      email,
-      password,
-      OTPsended: false,
-      OTP: "111111", //it is random
-    });
 
-    setIsLoading(false);
-    if (!data.success) {
-      if (data.error.error?.errorCode === "VALIDATION_ERROR") {
-        const messages = data.error.error.error
-          .map((detail) => detail.msg)
-          .join(".\n");
-        setToasterData([
-          {
-            status: "error",
-            info: messages,
-            duration: 9000,
-          },
-        ]);
-        return;
-      }
-      setToasterData([
-        {
-          status: "error",
-          info: data.error.message,
-          duration: 7000,
-        },
-      ]);
-      return;
-    }
-
-    const userdata = {
-      userID: data.data.userID,
-      email: data.data.email,
-      username: data.data.username,
-      password: password,
-      isAuthenticated: data.data.isAuthenticated,
-      role: data.data.role,
-    };
-    setUser(userdata);
-   
-    sessionStorage.setItem("user_auth", JSON.stringify(userdata));
-    navigateTo("auth/email_verification");
-  };
-  const handleVerification = async (otp) => {
-    setIsLoading(true);
-    const enteredOtp = otp.join("");
-    const raw_userdata = sessionStorage.getItem("user_auth");
-    if(!raw_userdata){
-       navigateTo("auth/signup");
-    }
-    const userdata = JSON.parse(raw_userdata);
-    const data = await signup({
-      username: userdata?.username,
-      email: userdata?.email,
-      password: userdata?.password,
-      OTPsended: true,
-      OTP: enteredOtp,
-    });
-
-    setIsLoading(false);
-    if (!data.success) {
-      if (data.error.error?.errorCode === "VALIDATION_ERROR") {
-        const messages = data.error.error.error
-          .map((detail) => detail.msg)
-          .join(".\n");
-        setToasterData([
-          {
-            status: "error",
-            info: messages,
-            duration: 9000,
-          },
-        ]);
-        return;
-      }
-      setToasterData([
-        {
-          status: "error",
-          info: data.error.message,
-          duration: 7000,
-        },
-      ]);
-      return;
-    }
-    setUser({
-      ...user,
-      isAuthenticated: data.data.isAuthenticated,
-    });
-    navigateTo("/dashboard");
-  };
-  const onSigninWithProvider = async ({ provider }) => {
-    setIsLoading(true);
-    const data = await signin_with_provider({ provider });
-
-    if (!data.success) {
-      setToasterData([
-        {
-          status: "error",
-          info: data?.error?.message,
-          duration: 7000,
-        },
-      ]);
-      return;
-    }
-    console.log(data.data.redirect_url);
-    if (data.data?.redirect && data.data?.redirect_url) {
-      window.location.href = data.data.redirect_url;
-    }
-    setIsLoading(false);
-  };
   return (
     <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-sky-500/30 selection:text-sky-300">
       {/* Dynamic Background Neon Glows */}
@@ -232,14 +71,44 @@ export default function Auth() {
         {location.pathname === "/auth/signin" && (
           <SignInForm
             onSwitch={() => navigateTo("auth/signup")}
-            onSignIn={onSignin}
-            onSigninWithProvider={onSigninWithProvider}
+            onSignIn={() => {
+              onSignin(
+                { email, password },
+                { setIsLoading, setToasterData, setUser },
+                { navigateTo },
+              );
+            }}
+            onSigninWithProvider={(provider) => {
+              onSigninWithProvider(
+                { provider },
+                { setIsLoading, setToasterData },
+                { navigateTo },
+              );
+            }}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
           />
         )}
         {location.pathname === "/auth/signup" && (
           <SignUpForm
             onSwitch={() => navigateTo("auth/signin")}
-            onSignUp={onSignup}
+            onSignUp={() => {
+              onSignup(
+                { username, email, password, confirmPassword },
+                { setIsLoading,toasterData, setToasterData, setUser },
+                { navigateTo },
+              );
+            }}
+            username={username}
+            setUsername={setUsername}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
           />
         )}
         {location.pathname === "/auth/email_verification" && (
@@ -248,17 +117,20 @@ export default function Auth() {
             onOtpChange={handleOtpChange}
             onBack={() => navigateTo("auth/signup")}
             onComplete={() => {
-              handleVerification(otp);
+              handleVerification(
+                { otp },
+                { setIsLoading, toasterData,setToasterData, setUser },
+                { navigateTo },
+              );
             }}
             handleResendOTP={() => {
               setOtp(new Array(6).fill(""));
               if (user.email) {
-                onSignup({
-                  username: user.username,
-                  email: user.email,
-                  password: user.password,
-                  confirmPassword: user.password,
-                });
+                onSignup(
+                  { username, email, password, confirmPassword },
+                  { setIsLoading, toasterData,setToasterData, setUser },
+                  { navigateTo },
+                );
                 return;
               }
               navigateTo("auth/signup");

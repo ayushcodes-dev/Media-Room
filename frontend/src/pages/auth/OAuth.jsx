@@ -32,6 +32,11 @@ const handleOAuthCallback = async ({
       setUser({ ...result.data });
       isHandshakeComplete.current = true;
       navigate('/dashboard')
+      console.log(result.data)
+        localStorage.setItem(
+          "user_auth",
+          JSON.stringify({ ...result.data }),
+        );
     } else {
       console.log("handshanke :", isHandshakeComplete);
       if (!isHandshakeComplete.current) {
@@ -453,5 +458,6 @@ progressTimerRef.current = setInterval(() => {
         </div>
       </main>
     </div>
+
   );
 }

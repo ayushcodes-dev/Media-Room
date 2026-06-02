@@ -9,7 +9,7 @@ const VerificationForm = ({
   onComplete,
   handleResendOTP,
 }) => (
-  <GlassCard>
+  <GlassCard className="p-10 w-md">
     <div className="flex justify-start mb-6">
       <button
         onClick={onBack}

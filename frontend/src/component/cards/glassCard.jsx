@@ -1,11 +1,31 @@
 
 
 // Glass Card Container: Provides the frosted glass effect with blurred background
-const GlassCard = ({ children, className = "" }) => (
-  <div
-    className={`backdrop-blur-2xl bg-white/5 border border-white/10 rounded-[2rem] p-10 shadow-2xl w-full max-w-md ${className}`}
-  >
-    {children}
-  </div>
-);
+export const GlassCard = ({
+  children,
+  className = "",
+  hoverEffect = true,
+  onClick = null,
+}) => {
+  
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        relative backdrop-blur-xl bg-slate-900/30 border border-slate-800/60 rounded-2xl p-6
+        shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+        transition-all duration-350 ease-out
+        ${onClick ? "cursor-pointer" : ""}
+        ${hoverEffect ? "hover:border-sky-500/40 hover:shadow-[0_0_25px_rgba(14,165,233,0.12)] hover:translate-y-[-2px]" : ""}
+        ${className}
+      `}
+    >
+      {/* Dynamic neon corner ambient glow */}
+      <div className="absolute -top-[1px] -left-[1px] w-8 h-8 rounded-tl-2xl border-t border-l border-sky-400/20 pointer-events-none" />
+      <div className="absolute -bottom-[1px] -right-[1px] w-8 h-8 rounded-br-2xl border-b border-r border-sky-400/20 pointer-events-none" />
+      {children}
+    
+    </div>
+  );
+};
 export default GlassCard;

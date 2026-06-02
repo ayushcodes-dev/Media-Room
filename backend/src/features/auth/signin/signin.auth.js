@@ -3,10 +3,15 @@ import { UserModel } from "#/database/mongoose/schema/index.model.js";
 import { signinWrongAttemptLimit, signinBlockTime } from "#/utility.js";
 // function to compare password
 async function checkPassword(inputPassword, storedPassword) {
+    try{
     const isMatch = await bcrypt.compare(inputPassword, storedPassword);
     return isMatch;
+    }catch{
+        return false
+    }
 }
 async function handleWrongAttempt(user) {
+    try{
     if (user.signinPasswordAttempt?.length >= signinWrongAttemptLimit-1) {
         // updating user and set block date
         const updatedUser = await UserModel.findOneAndUpdate(
@@ -32,6 +37,9 @@ async function handleWrongAttempt(user) {
         if (!updatedUser) return false;
         return true;
     }
+}catch(err){
+    return false
+}
 }
 // function to check user is valid for signin or not
 async function isUserValidForSignin(user) {
@@ -76,6 +84,7 @@ function authenticateInSession(req, Data) {
 
 // Handles Signin
 async function handleSignin(req, Data) {
+   
     const response = {
         success: false,
         statusCode: 404,

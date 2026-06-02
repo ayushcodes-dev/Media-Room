@@ -28,14 +28,15 @@ export const responseHandler = (req, res, next) => {
         errors = null
     } = {}) => {
         return res.status(statusCode).json({
-            success: false,
-            statusCode: statusCode,
-            message: message,
-            error: {
-                status: true,
-                error: errors,
-                errorCode: errorCode
-            },
+          success: false,
+          statusCode: statusCode,
+          message: message,
+          error: {
+            status: true,
+            error: errors,
+            errorCode: errorCode,
+          },
+        
         });
     };
 

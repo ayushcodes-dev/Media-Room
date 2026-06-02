@@ -7,7 +7,7 @@ function MainPage({ children }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 console.log("MainPage rendered with activeTab:", activeTab, "and isSidebarOpen:", isSidebarOpen);
   return (
-    <div className=" min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden ">
+    <div className=" min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden no-scrollbar">
       {/* 1. Global Header */}
       <div className="relative ">
         <Header3
@@ -32,7 +32,7 @@ console.log("MainPage rendered with activeTab:", activeTab, "and isSidebarOpen:"
         />
 
         {/* 4. Main Content Area */}
-        <main className="flex-1 h-screen min-w-0 relative  overflow-scroll no-scrollbar ">
+        <main className="flex-1 h-screen min-w-0 relative  overflow-auto no-scrollbar ">
           {children}
         </main>
       </div>

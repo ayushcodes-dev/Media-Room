@@ -4,11 +4,10 @@ const InputField = ({
   icon: Icon,
   type,
   placeholder,
-  value,
-  onChange,
-  ref,
   id,
   autoComplete,
+  state,
+  setState
 }) => (
   <div className="mb-6 text-left group">
     <label className="block text-sky-400 text-[10px] font-bold mb-2 ml-1 tracking-[0.15em] uppercase opacity-60 group-focus-within:opacity-100 transition-opacity">
@@ -20,11 +19,11 @@ const InputField = ({
       </div>
       <input
         type={type}
-        value={value}
-        onChange={onChange}
+        value={state}
+        onChange={(e)=>{setState(e.currentTarget.value)}}
         className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 outline-none focus:border-sky-500/50 focus:ring-4 focus:ring-sky-500/5 transition-all font-inter"
         placeholder={placeholder}
-        ref={ref}
+     
         id={id}
         autoComplete={autoComplete}
       />

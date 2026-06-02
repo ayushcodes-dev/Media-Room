@@ -26,13 +26,18 @@ async function createUser(Data) {
 }
 //function to update user and make user authenticated in db
 async function authenticateUser(email, Data) {
+  const newData = {
+    isAuthenticated: true,
+    signup: true,
+  };
+  //if(Data.password) newData.password=Data.password
   try {
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       {
         $set: {
-          isAuthenticated: true,
-          signup: true,
+         ...newData
+          
         },
       },
       { returnDocument: "after", runValidators: true },
@@ -48,14 +53,18 @@ async function authenticateUser(email, Data) {
 // function to Update OTP in db
 async function updateOTP(email, Data) {
   try {
+    const newData = {
+      OTPsended: Data.OTPsended,
+      OTP: Data.OTP,
+      OTPsendDate: Data.OTPsendDate,
+      OTPAttempt: 0,
+    };
+      if (Data.password) newData.password = Data.password;
     const updatedUser = await UserModel.findOneAndUpdate(
       { email },
       {
         $set: {
-          OTPsended: Data.OTPsended,
-          OTP: Data.OTP,
-          OTPsendDate: Data.OTPsendDate,
-          OTPAttempt: 0,
+         ...newData
         },
       },
       { returnDocument: "after", runValidators: true },
@@ -101,6 +110,11 @@ function authenticateInSession(req, user) {
   req.session.role = "user";
 }
 async function HandleSignup(req, Data) {
+  //creeating user in session
+  req.session.username = Data.username;
+  req.session.email = Data.email;
+  req.session.isAuthenticated = false;
+  req.session.role = "user";
   // finding user from mongodb
   const user = await UserModel.findOne({ email: Data.email });
   // comparing otp sended time
@@ -141,12 +155,22 @@ async function HandleSignup(req, Data) {
         errors: null,
       };
     }
+    //creeating user in session
+     req.session.userID = Data.userID;
     return {
       success: true,
       statusCode: 200,
       message: "OTP Sended Successfully",
+      data: {
+        userID: Data.userID,
+        email: Data.email,
+        username: Data.username,
+        isAuthenticated: req.session.isAuthenticated,
+        role: Data.role,
+      },
     };
   }
+   req.session.userID = user.userID;
   // if user already authenticated
   if (user.signup === true) {
     return {
@@ -168,18 +192,19 @@ async function HandleSignup(req, Data) {
       return {
         success: false,
         statusCode: 409,
-        message: "E-mail is invalid",
-        errorCode: "INVALID_EMAIL",
+        message: "failed to ssend email",
+        errorCode: "FAILED_TO_SEND_EMAIL",
         errors: null,
       };
     }
     // Updating User or Updating OTP In MongoDB
-    const Data = {
+    const data = {
       OTP: OTP,
       OTPsended: true,
       OTPsendDate: Date.now(),
+      password: await hashPassword(Data.password),
     };
-    const update = await updateOTP(user.email, Data);
+    const update = await updateOTP(user.email, data);
     if (!update) {
       return {
         success: false,
@@ -198,7 +223,7 @@ async function HandleSignup(req, Data) {
         userID: user.userID,
         email: user.email,
         username: user.username,
-        isAuthenticated: true,
+        isAuthenticated: req.session ? req.session.isAuthenticated : false,
         role: user.role,
       },
     };
@@ -251,7 +276,7 @@ async function HandleSignup(req, Data) {
     };
   }
   // updating user and making user authenticated
-  const authUser = await authenticateUser(user.email);
+  const authUser = await authenticateUser(user.email,Data);
   if (!authUser) {
     return {
       success: false,

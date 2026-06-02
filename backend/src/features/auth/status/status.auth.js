@@ -1,22 +1,17 @@
 function handleStatus(req) {
-  if (!req.session || !req.session.isAuthenticated) {
-    return {
-      success: false,
-      message: "User is not authenticated",
-      statusCode: 404,
-      errorCode: "FAILED_SIGNIN",
-      data: null,
-    };
-  }
+  const data = {
+    isAuthenticated: req.session?req.session.isAuthenticated :false,
+    userID:req.session?req.session.userId : null,
+    username:req.session?req.session.username :null,
+    email: req.session?req.session.email : null,
+    role: req.session?req.session.role : null,
+  };
+ 
   return {
     success: true,
-    message: "User is authenticated",
+    message: "successfully got user data",
     statusCode: 200,
-    data: {
-      isAuthenticated: req.session.isAuthenticated || false,
-      username: req.session.username || null,
-      email: req.session.email || null,
-    },
+    data: data
   };
 }
 export default handleStatus;

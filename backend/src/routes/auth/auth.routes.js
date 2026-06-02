@@ -7,6 +7,7 @@ import validate from "#/validator/index.validate.js";
 import handleSignup from "#/features/auth/signup/signup.auth.js";
 import handleSignin from "#/features/auth/signin/signin.auth.js";
 import handleSignout from "#/features/auth/signout/signout.auth.js";
+import handleStatus from "#/features/auth/status/status.auth.js";
 //import handleStatus from "#/features/auth/status/status.auth.js"; import handleUserAuth_middle from "#/middleware/auth.middleware.js";
 const router = express.Router();
 /**

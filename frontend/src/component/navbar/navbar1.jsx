@@ -1,8 +1,7 @@
 import { Menu, X } from "lucide-react";
-import { YouTubeLogo } from "@/component/icon/youtube";
 import Button from "@/component/button/button1.jsx";
 import { useNavigate } from "react-router-dom";
-
+import AppTextLogo from "@/component/logo/app.logo";
 const Navbar = ({ scrolled, isMenuOpen, setIsMenuOpen }) => {
   const navigate = useNavigate();
   return (
@@ -12,11 +11,9 @@ const Navbar = ({ scrolled, isMenuOpen, setIsMenuOpen }) => {
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <YouTubeLogo className="w-6 h-6" />
+            <img src="/appLogo.png" />
           </div>
-          <span className="text-2xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-            TUBENIX
-          </span>
+          <AppTextLogo fontSize="text-3xl" />
         </div>
 
         <div className="hidden md:flex items-center gap-6">

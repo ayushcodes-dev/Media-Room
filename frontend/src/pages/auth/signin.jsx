@@ -4,16 +4,23 @@ import GlassCard from "@/component/cards/glassCard";
 import NeonButton from "@/component/button/neonButton";
 import GoogleIcon from "@/component/icon/google";
 import GithubIcon from "@/component/icon/github";
-import { useAuth } from "@/hooks/useAuth.jsx";
-import { useRef } from "react";
+
 //import { useNavigate } from "react-router-dom";
-const SignInForm = ({ onSwitch, onSignIn,onSigninWithProvider }) => {
-  const emailRef = useRef();
-  const passwordRef = useRef();
-  const { setUser } = useAuth(); // ✅ TOP LEVEL
- //const navigate = useNavigate();
+const SignInForm = ({
+  onSwitch,
+  onSignIn,
+  onSigninWithProvider,
+  email,
+  setEmail,
+  password,
+  setPassword,
+}) => {
+  
+ 
+
+  //const navigate = useNavigate();
   return (
-    <GlassCard>
+    <GlassCard className="p-10 w-md">
       <h2 className="text-3xl font-black mb-2 tracking-tight font-orbitron uppercase">
         Sign In
       </h2>
@@ -26,28 +33,26 @@ const SignInForm = ({ onSwitch, onSignIn,onSigninWithProvider }) => {
           icon={Mail}
           type="email"
           placeholder="name@example.com"
-          ref={emailRef}
           id="email"
           autoComplete="username"
+          state={email}
+          setState={setEmail}
         />
         <InputField
           label="Password"
           icon={Lock}
           type="password"
           placeholder="••••••••"
-          ref={passwordRef}
           id="password"
           autoComplete="current-password"
+          state={password}
+          setState={setPassword}
         />
       </form>
       <div className="mt-10">
         <NeonButton
           onClick={() => {
-            onSignIn({
-              email: emailRef.current.value,
-              password: passwordRef.current.value,
-              setUser,
-            });
+            onSignIn();
           }}
         >
           SIGN IN <ArrowRight size={20} strokeWidth={3} />
@@ -66,12 +71,22 @@ const SignInForm = ({ onSwitch, onSignIn,onSigninWithProvider }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <NeonButton variant="ghost" className="!py-3 text-sm font-bold" onClick={()=>{
-onSigninWithProvider({ provider: "google" });
-        }}>
+        <NeonButton
+          variant="ghost"
+          className="!py-3 text-sm font-bold"
+          onClick={() => {
+            onSigninWithProvider("google");
+          }}
+        >
           <GoogleIcon /> GOOGLE
         </NeonButton>
-        <NeonButton variant="ghost" className="!py-3 text-sm font-bold">
+        <NeonButton
+          variant="ghost"
+          className="!py-3 text-sm font-bold"
+          onClick={() => {
+            onSigninWithProvider("github`");
+          }}
+        >
           <GithubIcon /> GITHUB
         </NeonButton>
       </div>
