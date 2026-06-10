@@ -1,9 +1,12 @@
-import { AuthProvider} from "@/context/auth";
-
+import AuthProvider from "@/context/auth.provider.jsx";
+import ProjectStatusProvider from "@/context/projectStatus.provider.jsx";
+import ProjectProvider from "@/context/project.provider.jsx";
 export default function Provider({ children }) {
   return (
     <AuthProvider>
-      {children}
+      <ProjectStatusProvider>
+        <ProjectProvider>{children}</ProjectProvider>
+      </ProjectStatusProvider>
     </AuthProvider>
   );
 }

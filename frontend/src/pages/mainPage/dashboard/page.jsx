@@ -1,7 +1,8 @@
 import MainPage from "@/wrapper/mainPage";
 import Protect from "@/wrapper/protect";
-
-import { useState } from "react";
+import { UseProjectStatus } from "@/hooks/useprojectStatus.jsx";
+import { UseProject } from "@/hooks/useProject.jsx";
+import { useState, useEffect } from "react";
 import {
   Copy,
   Sparkles,
@@ -10,145 +11,19 @@ import {
   FileText,
   Share2,
   ChevronRight,
-  Plus,
 } from "lucide-react";
+
+import MainPageHeader from "@/component/header/mainPage.jsx";
 import GlassCard from "@/component/cards/glassCard";
 import { NeonButton2 } from "@/component/button/neonButton.jsx";
 import SkeletonLoading from "./skeletonLoading";
-import copyToClipboard from "@/utility/copyToClipboard.js"
-
+import copyToClipboard from "@/utility/copyToClipboard.js";
+import getProjectStatus from "@/features/project/status.project.js";
+import Toaster1 from "@/component/toaster/toaster1.jsx";
+import getProjectByID from "@/features/project/get.project.js"
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
-const INITIAL_PROJECTS = [
-  {
-    id: "proj-1",
-    uid: "001",
-    name: "AI Tech Review 2024",
-    title: "The Future of AI: 10 Tools You Need to Know",
-    description:
-      "Master React 19 new features including Actions, Server Components, useActionState, and more! Get ready for next-gen web development with hands-on coding examples designed for absolute beginners.",
-    tags: "ai tools, artificial intelligence, tech review, artificial intelligence tutorial, future technology",
-    prompt:
-      "A futuristic digital workspace screen showing glowy cyan reactant code atoms, high contrast neon styling, depth of field, ultra realistic 3D render, tech background",
-    thumbnail:
-      "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "ready", // green
-    date: "2026-05-24",
-  },
-  {
-    id: "proj-2",
-    uid: "002",
-    name: "Fitness Journey Vlog",
-    title: "How I Transformed My Body in 90 Days (No Gym Required!)",
-    description:
-      "Learn the architectural patterns behind state-of-the-art AI agents. From memory vector search to action planners, we dismantle how companies are building production-ready cognitive bots.",
-    tags: "fitness transformation, weight loss, body transformation, home workout, healthy lifestyle",
-    prompt:
-      "A conceptual visualization of an glowing cybernetic brain interacting with server nodes, sky blue neon connections, dark reflective glossy floor, cinematic render, 8k",
-    thumbnail:
-      "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "draft", // yellow
-    date: "2026-05-20",
-  },
-  {
-    id: "proj-3",
-    uid: "003",
-    name: "Tokyo Night Walk",
-    title: "Midnight Tokyo 4K - Rain Walks with Binaural Neon Ambience",
-    description:
-      "Step up your CSS designs with complex backdrop-filter, dynamic border-images, and subtle neon drop-shadows. Live coding with pure utility classes to build premium modern web applications.",
-    tags: "tokyo walk, nighttime tokyo, rain walk, dynamic city lights, 4k street walk, virtual tour",
-    prompt:
-      "Abstract transparent glass panels reflecting soft cyber-punk sky-blue lights, high-end design dashboard mockups, modern UI aesthetics, ultra minimal render",
-    thumbnail: null, // "Not Generated" fallback state
-    contentStatus: "draft", // yellow
-    thumbnailStatus: "pending", // red
-    date: "2026-05-18",
-  },
-  {
-    id: "proj-4",
-    uid: "004",
-    name: "React 19 Complete Guide",
-    title: "React 19 is HERE! Everything You Need to Know (In 10 Minutes)",
-    description:
-      "Master React 19 new features including Actions, Server Components, useActionState, and more! Get ready for next-gen web development with hands-on coding examples designed for absolute beginners.",
-    tags: "react 19, reactjs tutorial, web development, javascript, learn react, frontend engineering, coding",
-    prompt:
-      "A futuristic digital workspace screen showing glowy cyan reactant code atoms, high contrast neon styling, depth of field, ultra realistic 3D render, tech background",
-    thumbnail:
-      "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "ready", // green
-    date: "2026-05-24",
-  },
-  {
-    id: "proj-5",
-    uid: "005",
-    name: "AI Agent Architectures",
-    title: "How to Build an AI Agent in 2026: Step-by-Step System Design",
-    description:
-      "Learn the architectural patterns behind state-of-the-art AI agents. From memory vector search to action planners, we dismantle how companies are building production-ready cognitive bots.",
-    tags: "ai agents, artificial intelligence, LLM, system design, chatgpt api, automation, python ai",
-    prompt:
-      "A conceptual visualization of an glowing cybernetic brain interacting with server nodes, sky blue neon connections, dark reflective glossy floor, cinematic render, 8k",
-    thumbnail:
-      "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "draft", // yellow
-    thumbnailStatus: "ready", // green
-    date: "2026-05-20",
-  },
-  {
-    id: "proj-6",
-    uid: "006",
-    name: "Tailwind Glassmorphic UI",
-    title:
-      "Craft Stunning Glassmorphic Layouts in Tailwind CSS with Neon Accents",
-    description:
-      "Step up your CSS designs with complex backdrop-filter, dynamic border-images, and subtle neon drop-shadows. Live coding with pure utility classes to build premium modern web applications.",
-    tags: "tailwind css, CSS tutorials, UI UX design, glassmorphism, front-end tips, web design tutorial",
-    prompt:
-      "Abstract transparent glass panels reflecting soft cyber-punk sky-blue lights, high-end design dashboard mockups, modern UI aesthetics, ultra minimal render",
-    thumbnail: null, // "Not Generated" fallback state
-    contentStatus: "pending", // red
-    thumbnailStatus: "pending", // red
-    date: "2026-05-18",
-  },
-  {
-    id: "proj-7",
-    uid: "007",
-    name: "TypeScript Mastery Pro",
-    title: "TypeScript Advanced Types: Level Up from Intermediate to Guru",
-    description:
-      "Crack open advanced generic types, mapped types, conditional types, and template literal keys. Learn how to design bulletproof type-safe libraries without breaking a sweat.",
-    tags: "typescript, ts generic, typescript tutorial, react typescript, node js, programming expert",
-    prompt:
-      "Monospace glowing letters TS in a dark sleek tech sphere, neon sky blue particle aura, floating in dark void, cinematic atmosphere",
-    thumbnail:
-      "https://images.unsplash.com/photo-1516116211223-5c359a36298a?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "draft", // yellow
-    date: "2026-05-15",
-  },
-  {
-    id: "proj-8",
-    uid: "008",
-    name: "SEO Tricks For Creators",
-    title:
-      "The Hidden Algorithm: Advanced SEO Secrets YouTube Doesn't Want You To Know",
-    description:
-      "Unlock explosive channel growth with calculated metadata strategies. Learn semantic search matching, tag hierarchies, and high-CTR thumbnail prompts designed to outrank competition.",
-    tags: "youtube seo, seo tutorial, youtube algorithm, channel growth, marketing strategy, video tags",
-    prompt:
-      "A sleek modern neon-blue graph arrow piercing upwards through glass grids, corporate cyberpunk styling, high key illumination, clean geometric vectors",
-    thumbnail: null,
-    contentStatus: "draft",
-    thumbnailStatus: "pending",
-    date: "2026-05-11",
-  },
-];
 
 // 4. SKELETON LOADER
 export const SkeletonLoader = () => {
@@ -175,21 +50,14 @@ export const SkeletonLoader = () => {
 // ==========================================
 // MAIN APP COMPONENT
 // ==========================================
+
 export default function App() {
-  // Projects State
-  const [projects] = useState(INITIAL_PROJECTS);
-  const [selectedProjectId, setSelectedProjectId] = useState(
-    INITIAL_PROJECTS[0].id,
-  );
+  const { projectStatus, setprojectStatus } = UseProjectStatus();
+  const { project, setProject } = UseProject();
+  const [toasterData, setToasterData] = useState([]);
+
   // Skeleton Loading Simulator State
-  const [isLoading] = useState(false);  
- 
-  // Find currently selected project object
-  const selectedProject =
-    projects.find((p) => p.id === selectedProjectId) || projects[0];
-
-  // Quick generation mockup to insert real projects dynamically
-
+  const [isLoading] = useState(false);
 
   // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
   const renderInlineStatusBadge = (status, label) => {
@@ -208,10 +76,23 @@ export default function App() {
       </div>
     );
   };
+  async function handleDashboard() {
+    const res = await getProjectStatus({
+      projectStatus,
+      setprojectStatus,
+      setToasterData,
+    });
+    if (res && res.length > 0) {
+getProjectByID({ projectID: res[0].projectID }, { setProject });
+    }
+  }
+  useEffect(() => {handleDashboard()}, []);
 
   return (
     <Protect>
       <MainPage>
+        <Toaster1 data={toasterData} />
+
         <div>
           {/* MAIN CONTENT AREA */}
           {isLoading ? (
@@ -219,105 +100,20 @@ export default function App() {
           ) : (
             <main className="flex-1 px-4 md:px-8 py-6 mb-20 md:py-8 max-w-7xl mx-auto w-full space-y-6 ">
               {/* TOP DASHBOARD CONTROL PANEL */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900/65 pb-6">
-                <div>
-                  <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                    Dashboard
-                  </h1>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Select and manage your metadata blueprints for YouTube
-                    content creation
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2.5">
-                  <NeonButton2
-                    variant="secondary"
-                    icon={Plus}
-                    className="text-xs"
-                  >
-                    Create Project
-                  </NeonButton2>
-                </div>
-              </div>
+              <MainPageHeader
+                title="Your Dashboard"
+                description="Select and manage your metadata blueprints for YouTube
+          content creation"
+              />
               {/* DYNAMIC METADATA WORKSPACES */}
 
               <div className="space-y-8 animate-fade-in">
-                {/* WORKSPACES ROW (Screenshot visual match) */}
-                <div className="space-y-4">
-                  <div className="flex items-center pl-0.5">
-                    {/* Glowing sky-blue vertical indicator bar on title */}
-                    <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
-                    <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
-                      Workspaces
-                    </h3>
-                  </div>
-
-                  <div
-                    className="flex gap-5 overflow-x-auto pb-4 pt-1 snap-x scroll-smooth 
-                [&::-webkit-scrollbar]:h-2 
-                [&::-webkit-scrollbar-track]:bg-slate-950/20 
-                [&::-webkit-scrollbar-thumb]:bg-sky-500/20 
-                hover:[&::-webkit-scrollbar-thumb]:bg-sky-400/40 
-                [&::-webkit-scrollbar-thumb]:rounded-full"
-                  >
-                    {projects.map((p) => {
-                      const isSelected = p.id === selectedProjectId;
-                      return (
-                        <div
-                          key={p.id}
-                          onClick={() => setSelectedProjectId(p.id)}
-                          className={`
-                        snap-start shrink-0 w-[300px] cursor-pointer relative rounded-2xl p-6 transition-all duration-300 select-none
-                        backdrop-blur-xl border
-                        ${
-                          isSelected
-                            ? "bg-slate-900/60 border-sky-500/80 shadow-[0_0_20px_rgba(14,165,233,0.15),inset_0_1px_1px_rgba(255,255,255,0.05)]"
-                            : "bg-slate-900/20 border-slate-800/60 hover:border-slate-700 hover:bg-slate-900/40"
-                        }
-                      `}
-                        >
-                          {/* Project header with Chevron right */}
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div className="font-bold text-base text-slate-100 group-hover:text-sky-300 transition-colors">
-                              {p.name}
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-slate-500 mt-1 shrink-0" />
-                          </div>
-
-                          {/* UID Tag under title */}
-                          <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-5">
-                            ID: {p.uid}
-                          </div>
-
-                          {/* Double layout capsule status pills styled exactly as shown in screenshot */}
-                          <div className="flex gap-2.5 w-full">
-                            {renderInlineStatusBadge(
-                              p.contentStatus,
-                              "Content",
-                            )}
-                            {renderInlineStatusBadge(
-                              p.thumbnailStatus,
-                              "Thumbnail",
-                            )}
-                          </div>
-
-                          {/* Active blueprint header glow strip */}
-                          {isSelected && (
-                            <div className="absolute top-0 left-8 right-8 h-[1.5px] bg-sky-400 shadow-[0_0_10px_#38bdf8]" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* EXPANDED DETAILED WORKSPACE PREVIEW */}
+                {/* LAST PROJECT */}
                 <div className="space-y-4">
                   <div className="flex items-center pl-0.5">
                     <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
                     <h3 className="text-xs font-bold uppercase tracking-widest text-sky-400">
-                      Project Analytics Overview
+                      Last Project
                     </h3>
                   </div>
 
@@ -333,17 +129,14 @@ export default function App() {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
                             <div>
                               <h2 className="text-2xl font-black text-white tracking-tight">
-                                {selectedProject.name}
+                                {/* {selectedProject.name} */}
                               </h2>
                             </div>
 
                             <div className="flex items-center gap-2">
                               <NeonButton2
                                 onClick={() =>
-                                  copyToClipboard(
-                                    JSON.stringify(selectedProject, null, 2),
-                                    "metadata file",
-                                  )
+                                  copyToClipboard("hello", "metadata file")
                                 }
                                 variant="secondary"
                                 icon={Share2}
@@ -366,7 +159,7 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      selectedProject.title,
+                                      "selectedProject.title",
                                       "Title",
                                     )
                                   }
@@ -378,7 +171,7 @@ export default function App() {
                                 </button>
                               </div>
                               <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
-                                {selectedProject.title}
+                                {/* {selectedProject.title} */}
                               </p>
                             </div>
 
@@ -392,7 +185,7 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      selectedProject.description,
+                                      "selectedProject.description",
                                       "Description",
                                     )
                                   }
@@ -404,7 +197,7 @@ export default function App() {
                                 </button>
                               </div>
                               <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
-                                {selectedProject.description}
+                                {/* {selectedProject.description} */}
                               </p>
                             </div>
 
@@ -418,7 +211,7 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      selectedProject.tags,
+                                      " selectedProject.tags",
                                       "SEO Tags",
                                     )
                                   }
@@ -430,7 +223,7 @@ export default function App() {
                                 </button>
                               </div>
                               <div className="flex flex-wrap gap-1.5 pr-6">
-                                {selectedProject.tags
+                                {/* {selectedProject.tags
                                   .split(",")
                                   .map((tag, idx) => (
                                     <span
@@ -439,14 +232,14 @@ export default function App() {
                                     >
                                       #{tag.trim()}
                                     </span>
-                                  ))}
+                                  ))} */}
                               </div>
                             </div>
                           </div>
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
-                          <span>Created {selectedProject.date}</span>
+                          {/* <span>Created {selectedProject.date}</span> */}
                         </div>
                       </GlassCard>
                     </div>
@@ -467,7 +260,7 @@ export default function App() {
 
                           {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
                           <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl">
-                            {selectedProject.thumbnail ? (
+                            {/* {selectedProject.thumbnail ? (
                               <>
                                 <img
                                   src={selectedProject.thumbnail}
@@ -489,7 +282,7 @@ export default function App() {
                                   into image generators.
                                 </p>
                               </div>
-                            )}
+                            )} */}
                           </div>
 
                           {/* PROMPT SCRIPT PROJECTION */}
@@ -501,7 +294,7 @@ export default function App() {
                               <button
                                 onClick={() =>
                                   copyToClipboard(
-                                    selectedProject.prompt,
+                                    "selectedProject.prompt",
                                     "Thumbnail Prompt",
                                   )
                                 }
@@ -513,7 +306,7 @@ export default function App() {
                               </button>
                             </div>
                             <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
-                              "{selectedProject.prompt}"
+                              {/* "{  }" */}
                             </p>
                           </div>
                         </div>

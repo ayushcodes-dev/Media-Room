@@ -12,11 +12,11 @@ export const GlassCard = ({
     <div
       onClick={onClick}
       className={`
-        relative backdrop-blur-xl bg-slate-900/30 border border-slate-800/60 rounded-2xl p-6
+         backdrop-blur-xl  bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6
         shadow-[0_8px_32px_rgba(0,0,0,0.5)]
         transition-all duration-350 ease-out
         ${onClick ? "cursor-pointer" : ""}
-        ${hoverEffect ? "hover:border-sky-500/40 hover:shadow-[0_0_25px_rgba(14,165,233,0.12)] hover:translate-y-[-2px]" : ""}
+        ${hoverEffect ? "hover:border-sky-500/30 hover:shadow-[0_0_25px_rgba(14,165,233,0.12)] " : ""}
         ${className}
       `}
     >

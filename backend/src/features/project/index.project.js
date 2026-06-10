@@ -8,6 +8,7 @@ import getProjectByName from "./getByName.project.js";
 import renameProject from "./rename.project.js"
 import saveVideoDesc from "./saveVideoDesc.project.js"
 import saveCustomPrompt from "./saveCustomPrompt.project.js"
+import projectStatus from "./status.project.js"
 export {
   createProject,
   getProjects,
@@ -19,4 +20,5 @@ export {
   renameProject,
   saveVideoDesc,
   saveCustomPrompt,
+  projectStatus,
 };

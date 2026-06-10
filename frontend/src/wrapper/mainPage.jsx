@@ -5,7 +5,7 @@ import { useState } from "react";
 function MainPage({ children }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-console.log("MainPage rendered with activeTab:", activeTab, "and isSidebarOpen:", isSidebarOpen);
+
   return (
     <div className=" min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden no-scrollbar">
       {/* 1. Global Header */}

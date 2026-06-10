@@ -3,13 +3,20 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite";
 import babel from '@rolldown/plugin-babel'
 import path from "path";
-
+import prerender from "vite-plugin-prerender";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
+    prerender({
+      staticDir: path.join(__dirname, "dist"),
+      routes: ["/"],
+    }),
   ],
   resolve: {
     alias: {

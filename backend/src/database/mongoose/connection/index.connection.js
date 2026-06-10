@@ -7,10 +7,11 @@ import mongoose from "mongoose";
 
 const connectMongoDB = async () => {
   try {
+  
     const conn = await mongoose.connect(
-      process.env.MONGO_DB_URI /*{
-      dbName: "vidfly",
-    }*/,
+      process.env.MONGO_DB_URI, {
+      dbName: "mediaRoom",
+    }
     );
 
     console.log(`MongoDB Connected`);

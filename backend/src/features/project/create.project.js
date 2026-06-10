@@ -2,13 +2,13 @@ import { ProjectModel } from "#/database/mongoose/schema/index.model.js";
 import { v4 as uuidv4 } from "uuid";
 
 
-async function checkProjectNameExists(userID, projectName) {
+async function checkProjectNameExists(userID, projectID) {
   
   const userProjects = await ProjectModel.findOne({ userID });
   if (!userProjects) {
     return false; 
   }
-  const projectNameExists = userProjects.projects.some((p) => p.projectName === projectName);
+  const projectNameExists = userProjects.projects.some((p) => p.projectID === projectID);
   return projectNameExists;
 }
 
@@ -17,17 +17,7 @@ async function createProject(req, Data) {
   const userID = req.session.userID;
 
   try {
-    const projectExists = await checkProjectNameExists(userID, Data.projectName);
-    if (projectExists) {
-      return {
-        success: false,
-        statusCode: 409,
-        message: "Project with the same name already exists.",
-        errorCode: "PROJECT_ALREADY_EXISTS",
-        errors: null,
-      };
-    }
-
+    
     const projectID = uuidv4();
 
     const newItem = {
@@ -61,6 +51,7 @@ async function createProject(req, Data) {
         success: true,
         statusCode: 201,
         message: "Project created successfully",
+        data:{projectID:projectID},
         errorCode: null,
         errors: null,
       };

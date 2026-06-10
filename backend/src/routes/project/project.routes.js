@@ -17,6 +17,7 @@ import {
   renameProject,
   saveVideoDesc,
   saveCustomPrompt,
+  projectStatus,
 } from "#/features/project/index.project.js";
 
 const router = express.Router();
@@ -51,6 +52,21 @@ router.get("/project", async (req, res) => {
     return res.success({ ...projects });
   } else {
     return res.error({ ...projects });
+  }
+});
+
+/**
+ * @route   GET /project/status
+ * @desc    get status of projects of user
+ * @access  Private
+ */
+
+router.get("/project/status", async (req, res) => {
+  const status = await projectStatus(req);
+  if (status.success) {
+    return res.success({ ...status });
+  } else {
+    return res.error({ ...status });
   }
 });
 
