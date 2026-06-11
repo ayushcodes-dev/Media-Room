@@ -17,12 +17,12 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.15.0",
-    "tailwindcss": "^4.3.0",
-    "vite-plugin-prerender": "^1.0.8"
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@eslint/js": "^10.0.1",
+    "@prerenderer/rollup-plugin": "^0.3.12",
     "@rolldown/plugin-babel": "^0.2.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
