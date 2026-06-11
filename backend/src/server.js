@@ -22,7 +22,7 @@ async function startServer() {
    */
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: process.env.FRONTEND_BASE_URL,
       credentials: true,
     }),
   );
