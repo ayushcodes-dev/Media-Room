@@ -4,7 +4,7 @@ import GlassCard from "@/component/cards/glassCard";
 import NeonButton from "@/component/button/neonButton";
 import GoogleIcon from "@/component/icon/google";
 import GithubIcon from "@/component/icon/github";
-
+import {useEffect} from "react"
 //import { useNavigate } from "react-router-dom";
 const SignInForm = ({
   onSwitch,
@@ -16,7 +16,9 @@ const SignInForm = ({
   setPassword,
 }) => {
   
- 
+ useEffect(()=>{
+     document.title = "signin | Media Room";
+ },[])
 
   //const navigate = useNavigate();
   return (

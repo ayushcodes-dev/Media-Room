@@ -1,14 +1,20 @@
 import { ArrowLeft } from "lucide-react";
 import GlassCard from "@/component/cards/glassCard";
 import NeonButton from "@/component/button/neonButton";
-
+import {useEffect} from "react"
 const VerificationForm = ({
   otp,
   onOtpChange,
   onBack,
   onComplete,
   handleResendOTP,
-}) => (
+}) => {
+    
+ useEffect(() => {
+   document.title = "email_verification | Media Room";
+ }, []);
+
+  return(
   <GlassCard className="p-10 w-md">
     <div className="flex justify-start mb-6">
       <button
@@ -51,5 +57,5 @@ const VerificationForm = ({
       </button>
     </p>
   </GlassCard>
-);
+)};
 export default VerificationForm;

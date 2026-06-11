@@ -188,6 +188,7 @@ export default function App() {
 
   useEffect(() => {
     // Compare against the string value "true"
+       document.title = "Projects | Media Room";
     console.log(cardParams);
     if (cardParams === "true") {
       setIsCreateCard(true);

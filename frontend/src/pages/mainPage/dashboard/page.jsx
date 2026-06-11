@@ -86,7 +86,9 @@ export default function App() {
 getProjectByID({ projectID: res[0].projectID }, { setProject });
     }
   }
-  useEffect(() => {handleDashboard()}, []);
+  useEffect(() => {
+    document.title="Dashboard | Media Room"
+    handleDashboard()}, []);
 
   return (
     <Protect>

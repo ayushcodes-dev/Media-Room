@@ -3,7 +3,7 @@ import { Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
 import InputField from "@/component/input/input1";
 import GlassCard from "@/component/cards/glassCard";
 import NeonButton from "@/component/button/neonButton";
-
+import {useEffect} from "react"
 /**
  * FEATURE COMPONENTS
  */
@@ -20,7 +20,11 @@ const SignUpForm = ({
   confirmPassword,
   setConfirmPassword,
 }) => {
-  
+    
+ useEffect(() => {
+   document.title = "signup | Media Room";
+ }, []);
+
  
   return (
     <GlassCard className="p-10 w-md">
