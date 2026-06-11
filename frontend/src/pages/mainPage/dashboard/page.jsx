@@ -1,6 +1,6 @@
 import MainPage from "@/wrapper/mainPage";
 import Protect from "@/wrapper/protect";
-import { UseProjectStatus } from "@/hooks/useprojectStatus.jsx";
+import { UseProjectStatus } from "@/hooks/useProjectStatus.jsx";
 import { UseProject } from "@/hooks/useProject.jsx";
 import { useState, useEffect } from "react";
 import {

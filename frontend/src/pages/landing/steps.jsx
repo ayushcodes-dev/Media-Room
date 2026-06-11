@@ -1,6 +1,6 @@
 import { CheckCircle2, Layout, Zap } from "lucide-react";
 import StepCard from "@/component/cards/stepCards.jsx";
-import SectionHeader from "@/component/header/sectionHeader.jsx";
+import SectionHeader from "@/component/header/sectionheader.jsx";
 const Steps = () => (
   <section
     id="how-it-works"
