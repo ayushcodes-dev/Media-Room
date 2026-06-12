@@ -18,6 +18,11 @@ async function startServer() {
   dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
   /**
+   * @desc  handles all configration
+   */
+  handleconfigration();
+
+  /**
    * @desc Enable CORS (Cross-Origin Resource Sharing)
    */
   app.use(
@@ -26,12 +31,6 @@ async function startServer() {
       credentials: true,
     }),
   );
-
-  /**
-   * @desc  handles all configration
-   */
-  handleconfigration();
-
   /**
    * @desc Enable To Read Json
    */
@@ -60,7 +59,7 @@ async function startServer() {
   app.use(routes);
   // listen
   app.listen(port, () => {
-    console.log(`VidFly app listening on port ${port}`);
+    console.log(`media room app listening on port ${port}`);
   });
 }
 
