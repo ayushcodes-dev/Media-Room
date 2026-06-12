@@ -6,7 +6,7 @@ function handleStatus(req) {
     email: req.session?req.session.email : null,
     role: req.session?req.session.role : null,
   };
- console.log(req.cookies, req.session)
+
   return {
     success: true,
     message: "successfully got user data",
