@@ -25,6 +25,7 @@ async function startServer() {
   /**
    * @desc Enable CORS (Cross-Origin Resource Sharing)
    */
+   app.set("trust proxy", 1);
   app.use(
     cors({
       origin: process.env.FRONTEND_BASE_URL,

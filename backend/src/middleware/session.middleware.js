@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 
 function Handlesession() {
     return session({
+       
         secret: "supersecretkey",
         resave: false,
         saveUninitialized: false,
@@ -14,8 +15,8 @@ function Handlesession() {
         }),
 
         cookie: {
-            httpOnly: false,
-            secure: false,
+            httpOnly: true,
+            secure: true,
             maxAge: Number.parseInt(process.env.SESSION_AGE)
         }
     });
