@@ -4,21 +4,20 @@ import mongoose from "mongoose";
 
 function Handlesession() {
     return session({
-       
-        secret: "supersecretkey",
-        resave: false,
-        saveUninitialized: false,
+      secret: "supersecretkey",
+      resave: false,
+      saveUninitialized: false,
+      store: MongoStore.create({
+        client: mongoose.connection.getClient(),
+        collectionName: "sessions",
+      }),
 
-        store: MongoStore.create({
-            client: mongoose.connection.getClient(),
-            collectionName: "sessions"
-        }),
-
-        cookie: {
-            httpOnly: true,
-            secure: true,
-            maxAge: Number.parseInt(process.env.SESSION_AGE)
-        }
+      cookie: {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: Number.parseInt(process.env.SESSION_AGE),
+      },
     });
 }
 

@@ -30,6 +30,7 @@ async function startServer() {
     cors({
       origin: process.env.FRONTEND_BASE_URL,
       credentials: true,
+     
     }),
   );
   /**
