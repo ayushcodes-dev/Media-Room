@@ -24,6 +24,7 @@ router.post("/auth/signin", signinValidator, validate, async (req, res) => {
   };
   const signin = await handleSignin(req, Data);
   if (signin) {
+    console.log(res)
     res.success({ ...signin });
   } else {
     res.error({ ...signin });
