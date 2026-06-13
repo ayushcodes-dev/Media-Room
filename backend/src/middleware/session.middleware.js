@@ -15,7 +15,7 @@ function Handlesession() {
       cookie: {
         httpOnly: true,
         secure: true,
-        sameSite: "none",
+        SameSite: "none",
         maxAge: Number.parseInt(process.env.SESSION_AGE),
       },
     });
