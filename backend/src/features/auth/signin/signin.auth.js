@@ -80,6 +80,11 @@ function authenticateInSession(req, Data) {
     req.session.userID = Data.userID;
     req.session.isAuthenticated = true;
     req.session.role = Data.role
+    req.session.save((err) => {
+  if (err) {
+    console.error("Session save error:", err);
+  }
+})
 }
 
 // Handles Signin
@@ -129,7 +134,7 @@ async function handleSignin(req, Data) {
     Data.role= user.role
     Data.username = user.username
     authenticateInSession(req, Data);
-    
+    console.log(req.session);
     return {
         success: true,
         statusCode: 200,

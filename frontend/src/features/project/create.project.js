@@ -18,7 +18,6 @@ async function createProject(
   }
 
   if (data.success) {
-    setprojectStatus(data.projects);
     setToasterData([
       {
         status: "success",

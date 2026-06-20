@@ -3,6 +3,7 @@ import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 
 function Handlesession() {
+  
     return session({
       secret: "supersecretkey",
       resave: false,
@@ -13,9 +14,9 @@ function Handlesession() {
       }),
 
       cookie: {
-        httpOnly: true,
-        secure: true,
-      sameSite: 'none',
+        httpOnly: true, // process.env.DEPLOYMENT === "production",
+        secure: process.env.NODE_ENV === "production", // process.env.DEPLOYMENT === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: Number.parseInt(process.env.SESSION_AGE),
       },
     });

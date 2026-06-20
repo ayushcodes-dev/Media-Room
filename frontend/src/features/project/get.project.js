@@ -10,5 +10,6 @@ async function getProjectByID({ projectID }, { setProject }) {
     });
     return res.data;
   }
+  return null
 }
 export default getProjectByID;

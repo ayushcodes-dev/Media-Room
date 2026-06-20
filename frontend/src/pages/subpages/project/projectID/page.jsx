@@ -1,4 +1,4 @@
-import MainPage from "@/wrapper/mainPage";
+import SubPage from "@/wrapper/subPage";
 import Protect from "@/wrapper/protect";
 
 import { useState, useEffect } from "react";
@@ -15,11 +15,11 @@ import {
 import MainPageHeader from "@/component/header/mainPage.jsx";
 import GlassCard from "@/component/cards/glassCard";
 import { NeonButton2 } from "@/component/button/neonButton.jsx";
-import SkeletonLoading from "./skeletonLoading";
+
 import copyToClipboard from "@/utility/copyToClipboard.js";
 import getProjectStatus from "@/features/project/status.project.js";
 import Toaster1 from "@/component/toaster/toaster1.jsx";
-import getProjectByID from "@/features/project/get.project.js"
+
 import { useContext } from "react";
 import projectStatusContext from "@/context/projectStatus.js";
 // ==========================================
@@ -60,7 +60,6 @@ export default function App() {
   // Skeleton Loading Simulator State
   const [isLoading] = useState(false);
 
-  
   async function handleDashboard() {
     const res = await getProjectStatus({
       projectStatus,
@@ -96,35 +95,34 @@ export default function App() {
 
   return (
     <Protect>
-      <MainPage>
+      <SubPage>
         <Toaster1 data={toasterData} />
-
         <div>
           {/* MAIN CONTENT AREA */}
           {isLoading ? (
             <SkeletonLoading />
           ) : (
-            <main className="flex-1 px-4 md:px-8 py-6 mb-20 md:py-8 max-w-7xl mx-auto w-full space-y-6 ">
+            <main className="flex-1 px-8  py-6 mb-20 md:py-8  mx-auto w-full space-y-6 ">
               {/* TOP DASHBOARD CONTROL PANEL */}
               <MainPageHeader
-                title="Your Dashboard"
+                title="Project"
                 description="Select and manage your metadata blueprints for YouTube
           content creation"
-                createProjectButton={true}
+                
               />
               {/* DYNAMIC METADATA WORKSPACES */}
 
               <div className="space-y-8 animate-fade-in">
                 {/* LAST PROJECT */}
                 <div className="space-y-4">
-                  <div className="flex items-center pl-0.5">
+                  {/* <div className="flex items-center pl-0.5">
                     <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
                     <h3 className="text-xs font-bold uppercase tracking-widest text-sky-400">
-                      Last Project
+                      hello
                     </h3>
-                  </div>
+                  </div> */}
 
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  <div className="grid  lg:grid-cols-4 gap-6">
                     {/* METADATA EXPORT COLUMN */}
                     <div className="lg:col-span-2 space-y-6">
                       <GlassCard
@@ -136,7 +134,6 @@ export default function App() {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
                             <div>
                               <h2 className="text-2xl font-black text-white tracking-tight">
-                                pikachu
                                 {/* {selectedProject.name} */}
                               </h2>
                             </div>
@@ -331,7 +328,7 @@ export default function App() {
             </main>
           )}
         </div>
-      </MainPage>
+      </SubPage>
     </Protect>
   );
 }

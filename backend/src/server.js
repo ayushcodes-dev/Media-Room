@@ -16,7 +16,7 @@ async function startServer() {
    * @desc  setting dns of google and cloudfare
    */
   dns.setServers(["8.8.8.8", "1.1.1.1"]);
-  app.set("trust proxy", 1);
+  //app.set("trust proxy", 1);
   /**
    * @desc  handles all configration
    */
@@ -28,9 +28,8 @@ async function startServer() {
    
   app.use(
     cors({
-      origin: process.env.FRONTEND_BASE_URL,
+      origin: process.env.FRONTEND_BASE_URL || "http://localhost:5173",
       credentials: true,
-     
     }),
   );
   /**

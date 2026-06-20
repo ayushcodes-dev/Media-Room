@@ -1,6 +1,6 @@
 import MainPage from "@/wrapper/mainPage";
 import Protect from "@/wrapper/protect";
-import { UseProjectStatus } from "@/hooks/useProjectStatus.jsx";
+
 import { useState, useEffect } from "react";
 import { Search, ChevronRight, X } from "lucide-react";
 import MainPageHeader from "@/component/header/mainPage.jsx";
@@ -13,138 +13,8 @@ import NeonButton from "@/component/button/neonButton.jsx";
 import { useSearchParams } from "react-router-dom";
 import createProject from "@/features/project/create.project.js";
 import { useNavigate } from "react-router-dom";
-// ==========================================
-// MOCK DATA & CONSTANTS
-// ==========================================
-const INITIAL_PROJECTS = [
-  {
-    id: "proj-1",
-    uid: "001",
-    name: "AI Tech Review 2024",
-    title: "The Future of AI: 10 Tools You Need to Know",
-    description:
-      "Master React 19 new features including Actions, Server Components, useActionState, and more! Get ready for next-gen web development with hands-on coding examples designed for absolute beginners.",
-    tags: "ai tools, artificial intelligence, tech review, artificial intelligence tutorial, future technology",
-    prompt:
-      "A futuristic digital workspace screen showing glowy cyan reactant code atoms, high contrast neon styling, depth of field, ultra realistic 3D render, tech background",
-    thumbnail:
-      "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "ready", // green
-    date: "2026-05-24",
-  },
-  {
-    id: "proj-2",
-    uid: "002",
-    name: "Fitness Journey Vlog",
-    title: "How I Transformed My Body in 90 Days (No Gym Required!)",
-    description:
-      "Learn the architectural patterns behind state-of-the-art AI agents. From memory vector search to action planners, we dismantle how companies are building production-ready cognitive bots.",
-    tags: "fitness transformation, weight loss, body transformation, home workout, healthy lifestyle",
-    prompt:
-      "A conceptual visualization of an glowing cybernetic brain interacting with server nodes, sky blue neon connections, dark reflective glossy floor, cinematic render, 8k",
-    thumbnail:
-      "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "draft", // yellow
-    date: "2026-05-20",
-  },
-  {
-    id: "proj-3",
-    uid: "003",
-    name: "Tokyo Night Walk",
-    title: "Midnight Tokyo 4K - Rain Walks with Binaural Neon Ambience",
-    description:
-      "Step up your CSS designs with complex backdrop-filter, dynamic border-images, and subtle neon drop-shadows. Live coding with pure utility classes to build premium modern web applications.",
-    tags: "tokyo walk, nighttime tokyo, rain walk, dynamic city lights, 4k street walk, virtual tour",
-    prompt:
-      "Abstract transparent glass panels reflecting soft cyber-punk sky-blue lights, high-end design dashboard mockups, modern UI aesthetics, ultra minimal render",
-    thumbnail: null, // "Not Generated" fallback state
-    contentStatus: "draft", // yellow
-    thumbnailStatus: "pending", // red
-    date: "2026-05-18",
-  },
-  {
-    id: "proj-4",
-    uid: "004",
-    name: "React 19 Complete Guide",
-    title: "React 19 is HERE! Everything You Need to Know (In 10 Minutes)",
-    description:
-      "Master React 19 new features including Actions, Server Components, useActionState, and more! Get ready for next-gen web development with hands-on coding examples designed for absolute beginners.",
-    tags: "react 19, reactjs tutorial, web development, javascript, learn react, frontend engineering, coding",
-    prompt:
-      "A futuristic digital workspace screen showing glowy cyan reactant code atoms, high contrast neon styling, depth of field, ultra realistic 3D render, tech background",
-    thumbnail:
-      "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "ready", // green
-    date: "2026-05-24",
-  },
-  {
-    id: "proj-5",
-    uid: "005",
-    name: "AI Agent Architectures",
-    title: "How to Build an AI Agent in 2026: Step-by-Step System Design",
-    description:
-      "Learn the architectural patterns behind state-of-the-art AI agents. From memory vector search to action planners, we dismantle how companies are building production-ready cognitive bots.",
-    tags: "ai agents, artificial intelligence, LLM, system design, chatgpt api, automation, python ai",
-    prompt:
-      "A conceptual visualization of an glowing cybernetic brain interacting with server nodes, sky blue neon connections, dark reflective glossy floor, cinematic render, 8k",
-    thumbnail:
-      "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "draft", // yellow
-    thumbnailStatus: "ready", // green
-    date: "2026-05-20",
-  },
-  {
-    id: "proj-6",
-    uid: "006",
-    name: "Tailwind Glassmorphic UI",
-    title:
-      "Craft Stunning Glassmorphic Layouts in Tailwind CSS with Neon Accents",
-    description:
-      "Step up your CSS designs with complex backdrop-filter, dynamic border-images, and subtle neon drop-shadows. Live coding with pure utility classes to build premium modern web applications.",
-    tags: "tailwind css, CSS tutorials, UI UX design, glassmorphism, front-end tips, web design tutorial",
-    prompt:
-      "Abstract transparent glass panels reflecting soft cyber-punk sky-blue lights, high-end design dashboard mockups, modern UI aesthetics, ultra minimal render",
-    thumbnail: null, // "Not Generated" fallback state
-    contentStatus: "pending", // red
-    thumbnailStatus: "pending", // red
-    date: "2026-05-18",
-  },
-  {
-    id: "proj-7",
-    uid: "007",
-    name: "TypeScript Mastery Pro",
-    title: "TypeScript Advanced Types: Level Up from Intermediate to Guru",
-    description:
-      "Crack open advanced generic types, mapped types, conditional types, and template literal keys. Learn how to design bulletproof type-safe libraries without breaking a sweat.",
-    tags: "typescript, ts generic, typescript tutorial, react typescript, node js, programming expert",
-    prompt:
-      "Monospace glowing letters TS in a dark sleek tech sphere, neon sky blue particle aura, floating in dark void, cinematic atmosphere",
-    thumbnail:
-      "https://images.unsplash.com/photo-1516116211223-5c359a36298a?w=800&auto=format&fit=crop&q=80",
-    contentStatus: "ready", // green
-    thumbnailStatus: "draft", // yellow
-    date: "2026-05-15",
-  },
-  {
-    id: "proj-8",
-    uid: "008",
-    name: "SEO Tricks For Creators",
-    title:
-      "The Hidden Algorithm: Advanced SEO Secrets YouTube Doesn't Want You To Know",
-    description:
-      "Unlock explosive channel growth with calculated metadata strategies. Learn semantic search matching, tag hierarchies, and high-CTR thumbnail prompts designed to outrank competition.",
-    tags: "youtube seo, seo tutorial, youtube algorithm, channel growth, marketing strategy, video tags",
-    prompt:
-      "A sleek modern neon-blue graph arrow piercing upwards through glass grids, corporate cyberpunk styling, high key illumination, clean geometric vectors",
-    thumbnail: null,
-    contentStatus: "draft",
-    thumbnailStatus: "pending",
-    date: "2026-05-11",
-  },
-];
+import { useContext } from "react";
+import projectStatusContext from "@/context/projectStatus.js";
 
 // 4. SKELETON LOADER
 export const SkeletonLoader = () => {
@@ -172,30 +42,66 @@ export const SkeletonLoader = () => {
 // MAIN APP COMPONENT
 // ==========================================
 export default function App() {
-  const { projectStatus, setprojectStatus } = UseProjectStatus();
+   const { projectStatus, setprojectStatus } = useContext(projectStatusContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const [toasterData, setToasterData] = useState([]);
   // Projects State
-  const [projects] = useState(INITIAL_PROJECTS);
-
+  
   const [search, setSearch] = useState("");
   const [projectName, setProjectName] = useState("");
   // Skeleton Loading Simulator State
   const [isLoading] = useState(false);
   const [isCreateCard, setIsCreateCard] = useState(false);
+ 
+
   const cardParams = searchParams.get("createProject");
   const navigate = useNavigate();
-
+  
   useEffect(() => {
-    // Compare against the string value "true"
-       document.title = "Projects | Media Room";
-    console.log(cardParams);
     if (cardParams === "true") {
       setIsCreateCard(true);
     } else {
       setIsCreateCard(false);
     }
   }, [cardParams]);
+
+    async function handleApp() {
+      const res = await getProjectStatus({
+        projectStatus,
+        setprojectStatus,
+        setToasterData,
+      });
+      
+      if (res && res.length > 0) {
+        setprojectStatus(() => [...res]);
+        //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
+      }
+    }
+    useEffect(() => {
+      document.title = "Dashboard | Media Room";
+      handleApp();
+    },[]);
+
+//  useEffect(() => {
+//    document.title = "Projects | Media Room";
+//    async function fetch() {
+//      const res = await getProjectStatus({
+//       projectStatus,
+//       setprojectStatus,
+//       setToasterData,
+//     });
+//      if(res && res.length > 0) {
+//       setprojectStatus(() => [...res]);
+//       setDataFetched(true); 
+//      console.log("Fetched project status:", res);
+//      }else{
+// setDataFetched(false); 
+//      }
+       
+//    }
+//    fetch();
+//  }, []);
+  
   const toggleCreateCardState = () => {
     if (cardParams === "false" || !cardParams) {
       setSearchParams({ createProject: "true" });
@@ -203,9 +109,6 @@ export default function App() {
       setSearchParams({ createProject: "false" });
     }
   };
-
-  // Quick generation mockup to insert real projects dynamically
-
   // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
   const renderInlineStatusBadge = (status, label) => {
     const colorMap = {
@@ -223,9 +126,7 @@ export default function App() {
       </div>
     );
   };
-  useEffect(() => {
-    getProjectStatus({ projectStatus, setprojectStatus, setToasterData });
-  }, []);
+ 
 
   return (
     <Protect>
@@ -243,6 +144,7 @@ export default function App() {
                 title="Your Projects"
                 description="Select and manage your metadata blueprints for YouTube
           content creation"
+                createProjectButton={true}
               />
               {isCreateCard ? (
                 <GlassCard className="pt-4 md:w-130  sm:w-100 fixed w-80  top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-9">
@@ -315,30 +217,31 @@ export default function App() {
                 hover:[&::-webkit-scrollbar-thumb]:bg-sky-400/40 
                 [&::-webkit-scrollbar-thumb]:rounded-full"
                   >
-                    {projects.map((p) => {
+                    {projectStatus.map((p) => {
                       return (
                         <div
-                          key={p.id}
+                          key={p.projectID}
                           className={`
-                         w-full cursor-pointer relative rounded-2xl p-6 transition-all duration-300 select-none
-                        backdrop-blur-xl border
-                        bg-slate-900/20 border-slate-800/60 hover:border-slate-700 hover:bg-slate-900/40
-                              hover: bg-slate-900/60 border-sky-500/80 shadow-[0_0_20px_rgba(14,165,233,0.15),inset_0_1px_1px_rgba(255,255,255,0.05)]"
-                      
-                      
-                      `}
+                                w-full cursor-pointer relative rounded-2xl p-6 transition-all duration-300 select-none
+                                backdrop-blur-xl border
+                                bg-slate-900/20 border-slate-800/60 hover:border-sky-500/80 hover:bg-slate-900/40
+                                hover:shadow-[0_0_20px_rgba(14,165,233,0.15),inset_0_1px_1px_rgba(255,255,255,0.05)]
+                              `}
+                          onClick={() => {
+                            navigate("/projects/" + p.projectID);
+                          }}
                         >
                           {/* Project header with Chevron right */}
                           <div className="flex items-start justify-between gap-2 mb-1.5">
                             <div className="font-bold text-base text-slate-100 group-hover:text-sky-300 transition-colors">
-                              {p.name}
+                              {p.projectName}
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-500 mt-1 shrink-0" />
                           </div>
 
                           {/* UID Tag under title */}
                           <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-5">
-                            ID: {p.uid}
+                            ID: {p.projectID}
                           </div>
 
                           {/* Double layout capsule status pills styled exactly as shown in screenshot */}
@@ -352,8 +255,11 @@ export default function App() {
                               "Thumbnail",
                             )}
                           </div>
-                          <div className="mt-2 pt-2  border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
-                            <span>Created {p.date}</span>
+                          <div className="mt-2 pt-2 font-bold tracking-widest border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
+                            <span>
+                              Created{" "}
+                              {`${new Date(p.date).getDate()}-${new Date(p.date).getMonth() + 1}-${new Date(p.date).getFullYear()}`}
+                            </span>
                           </div>
                         </div>
                       );
