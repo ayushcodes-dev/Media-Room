@@ -112,7 +112,7 @@ async function mygeminiservice(prompt) {
         errors: null,
       };
     }
-    if(!res.ok){
+    if (!res.ok) {
       console.log("Error from Gemini service:", res);
       return {
         success: false,
@@ -156,9 +156,92 @@ async function mygeminiservice(prompt) {
     };
   }
 }
+
+async function AI_Bazzar_Gemini_service(prompt) {
+  try {
+    const res = await fetch("https://ai-bazaar-dhvh.onrender.com/api/gemini", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+      }),
+    });
+    if (!res) {
+      return {
+        success: false,
+        statusCode: 500,
+        message: "failed to fetch data",
+        errorCode: "FAILED_TO_FETCH",
+        errors: null,
+      };
+    }
+    if (!res.ok) {
+      console.log("Error from Gemini service:", res);
+      return {
+        success: false,
+        statusCode: 500,
+        message: "failed to fetch data",
+        errorCode: "FAILED_TO_FETCH",
+        errors: null,
+      };
+    }
+    const resdata = await res.json();
+
+    if (!resdata.data) {
+      console.log("Invalid response from AI Bazaar service:", resdata);
+      return {
+        success: false,
+        statusCode: 500,
+        message: "failed to fetch data",
+        errorCode: "FAILED_TO_FETCH",
+        errors: null,
+      };
+    }
+    if(resdata.data.success){
+      const rawContent= resdata.data.response
+    //console.log(resdata);
+    let data = rawContent;
+  
+    try {
+      data = JSON.parse(rawContent)
+    } catch {
+      const cleanText = rawContent
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+      data = JSON.parse(cleanText);
+    }
+
+    return {
+      success: true,
+      statusCode: 500,
+      message: "successfully got content ",
+      error: null,
+      data: {
+        content: data,
+        reasoning_content: null,
+      },
+    };
+  }
+  else{
+    throw new Error("failed to get data")
+  }
+  } catch (error) {
+    console.log("error in ai bazaar gemini gen content ", error);
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
+  }
+}
 // chnages status of project in project collection
 async function changeProjectStatus(userID, Data) {
-  console.log(userID, Data);
   try {
     const result = await ProjectModel.updateOne(
       {
@@ -173,7 +256,7 @@ async function changeProjectStatus(userID, Data) {
     );
 
     if (result.matchedCount === 0 || result.modifiedCount === 0) {
-       console.error("error in change project status", result);
+      console.error("error in change project status", result);
       return {
         success: false,
         statusCode: 404,
@@ -200,40 +283,40 @@ async function changeProjectStatus(userID, Data) {
     };
   }
 }
-
-//create content in content collection
 async function storeContent(userID, projectID, Data) {
   try {
-    const user = new ContentModel({
-      userID,
-      projectID,
-      title: Data.title.data,
-      description: Data.description.data,
-      tags: Data.tags.data,
-    });
-    await user.save();
+   const newContent = await ContentModel.create({
+     userID,
+     projectID,
+     title: Data.title,
+     description: Data.description,
+     tags: Data.tags,
+     thumbnailDescription: Data.thumbnailDescription,
+   });
     return {
       success: true,
-      statusCode: 201,
-      message: "Content created successfully",
+      statusCode: 200, // 200 is appropriate for updates, 201 for new creations
+      message: "Content saved successfully",
+      data: newContent,
     };
   } catch (error) {
-    console.log("error in creating new content", error);
+    console.error("Error in upserting content:", error);
     return {
       success: false,
       statusCode: 500,
       message: "Internal Server Error",
       errorCode: "INTERNAL_SERVER_ERROR",
-      errors: null,
+      errors: error.message,
     };
   }
 }
-
 async function generateContent(req, Data) {
   const userID = req.session.userID;
-  const { customPrompt, projectID } = Data;
+  const { projectID, videoDescription } = Data;
   try {
-    const vedieoDesc = `my vedieo is about web dev roadmap ensures that it is not old and future proof I suggest them to learn mern for next step learn nextjs I told every parts in  detail whatlearner have to do`;
+    const vedieoDesc = videoDescription
+      ? videoDescription
+      : `my vedieo is about web dev roadmap ensures that it is not old and future proof I suggest them to learn mern for next step learn nextjs I told every parts in  detail whatlearner have to do`;
     // changing project status to processing
     const change = await changeProjectStatus(userID, {
       projectID,
@@ -245,17 +328,20 @@ async function generateContent(req, Data) {
       throw new Error("Invalid prompt provided");
     }
     // getting content
-    const content = await mygeminiservice(prompt);
+    const content = await AI_Bazzar_Gemini_service(prompt);
     if (!content.success) {
       throw new Error("Failed to fetch data");
     }
     // creating content in db
-
-    const created = await storeContent(userID, projectID, {
-      title: content.data.content.title,
-      description: content.data.content.description,
-      tags: content.data.content.tags,
-    });
+ const finalData = {
+   title: content.data.content.title.data,
+   description: content.data.content.description.data,
+   tags: content.data.content.tags.data,
+   thumbnailDescription: content.data.content.thumbnailDescription.data,
+ };
+//  console.log(content.data.content);
+//  console.log(finalData)
+    const created = await storeContent(userID, projectID, finalData);
     if (created.success) {
       // changing project status to processing
       const change = await changeProjectStatus(userID, {
@@ -267,11 +353,11 @@ async function generateContent(req, Data) {
         success: true,
         statusCode: 200,
         message: "successfully created content",
-        data: content.data.content,
+        data: finalData,
       };
     }
   } catch (error) {
-    console.error("generate Error:", error);
+   console.log("generate Error:", error);
     // changing project status to failed
     const change = await changeProjectStatus(userID, {
       projectID,

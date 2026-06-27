@@ -42,21 +42,20 @@ export const SkeletonLoader = () => {
 // MAIN APP COMPONENT
 // ==========================================
 export default function App() {
-   const { projectStatus, setprojectStatus } = useContext(projectStatusContext);
+  const { projectStatus, setprojectStatus } = useContext(projectStatusContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const [toasterData, setToasterData] = useState([]);
   // Projects State
-  
+
   const [search, setSearch] = useState("");
   const [projectName, setProjectName] = useState("");
   // Skeleton Loading Simulator State
   const [isLoading] = useState(false);
   const [isCreateCard, setIsCreateCard] = useState(false);
- 
 
   const cardParams = searchParams.get("createProject");
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     if (cardParams === "true") {
       setIsCreateCard(true);
@@ -65,43 +64,43 @@ export default function App() {
     }
   }, [cardParams]);
 
-    async function handleApp() {
-      const res = await getProjectStatus({
-        projectStatus,
-        setprojectStatus,
-        setToasterData,
-      });
-      
-      if (res && res.length > 0) {
-        setprojectStatus(() => [...res]);
-        //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
-      }
-    }
-    useEffect(() => {
-      document.title = "Dashboard | Media Room";
-      handleApp();
-    },[]);
+  async function handleApp() {
+    const res = await getProjectStatus({
+      projectStatus,
+      setprojectStatus,
+      setToasterData,
+    });
 
-//  useEffect(() => {
-//    document.title = "Projects | Media Room";
-//    async function fetch() {
-//      const res = await getProjectStatus({
-//       projectStatus,
-//       setprojectStatus,
-//       setToasterData,
-//     });
-//      if(res && res.length > 0) {
-//       setprojectStatus(() => [...res]);
-//       setDataFetched(true); 
-//      console.log("Fetched project status:", res);
-//      }else{
-// setDataFetched(false); 
-//      }
-       
-//    }
-//    fetch();
-//  }, []);
-  
+    if (res && res.length > 0) {
+      setprojectStatus(() => [...res]);
+      //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
+    }
+  }
+  useEffect(() => {
+    document.title = "Dashboard | Media Room";
+    handleApp();
+  }, []);
+
+  //  useEffect(() => {
+  //    document.title = "Projects | Media Room";
+  //    async function fetch() {
+  //      const res = await getProjectStatus({
+  //       projectStatus,
+  //       setprojectStatus,
+  //       setToasterData,
+  //     });
+  //      if(res && res.length > 0) {
+  //       setprojectStatus(() => [...res]);
+  //       setDataFetched(true);
+  //      console.log("Fetched project status:", res);
+  //      }else{
+  // setDataFetched(false);
+  //      }
+
+  //    }
+  //    fetch();
+  //  }, []);
+
   const toggleCreateCardState = () => {
     if (cardParams === "false" || !cardParams) {
       setSearchParams({ createProject: "true" });
@@ -126,7 +125,6 @@ export default function App() {
       </div>
     );
   };
- 
 
   return (
     <Protect>
@@ -177,7 +175,7 @@ export default function App() {
                         { setToasterData, setprojectStatus },
                       );
                       toggleCreateCardState();
-                      navigate("/project/" + response.data.projectID);
+                      navigate("/projects/" + response.data.projectID);
                     }}
                   >
                     Create project
@@ -217,53 +215,57 @@ export default function App() {
                 hover:[&::-webkit-scrollbar-thumb]:bg-sky-400/40 
                 [&::-webkit-scrollbar-thumb]:rounded-full"
                   >
-                    {projectStatus.map((p) => {
-                      return (
-                        <div
-                          key={p.projectID}
-                          className={`
+                    {projectStatus
+                      .sort((a, b) => {
+                        return new Date(b.date) - new Date(a.date);
+                      })
+                      .map((p) => {
+                        return (
+                          <div
+                            key={p.projectID}
+                            className={`
                                 w-full cursor-pointer relative rounded-2xl p-6 transition-all duration-300 select-none
                                 backdrop-blur-xl border
                                 bg-slate-900/20 border-slate-800/60 hover:border-sky-500/80 hover:bg-slate-900/40
                                 hover:shadow-[0_0_20px_rgba(14,165,233,0.15),inset_0_1px_1px_rgba(255,255,255,0.05)]
                               `}
-                          onClick={() => {
-                            navigate("/projects/" + p.projectID);
-                          }}
-                        >
-                          {/* Project header with Chevron right */}
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div className="font-bold text-base text-slate-100 group-hover:text-sky-300 transition-colors">
-                              {p.projectName}
+                            onClick={() => {
+                              navigate("/projects/" + p.projectID);
+                            }}
+                          >
+                            {/* Project header with Chevron right */}
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                              <div className="font-bold text-base text-slate-100 group-hover:text-sky-300 transition-colors">
+                                {p.projectName}
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-slate-500 mt-1 shrink-0" />
                             </div>
-                            <ChevronRight className="w-4 h-4 text-slate-500 mt-1 shrink-0" />
-                          </div>
 
-                          {/* UID Tag under title */}
-                          <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-5">
-                            ID: {p.projectID}
-                          </div>
+                            {/* UID Tag under title */}
+                            <div className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-5">
+                              ID: {p.projectID}
+                            </div>
 
-                          {/* Double layout capsule status pills styled exactly as shown in screenshot */}
-                          <div className="flex gap-2.5 w-full">
-                            {renderInlineStatusBadge(
-                              p.contentStatus,
-                              "Content",
-                            )}
-                            {renderInlineStatusBadge(
-                              p.thumbnailStatus,
-                              "Thumbnail",
-                            )}
+                            {/* Double layout capsule status pills styled exactly as shown in screenshot */}
+                            <div className="flex gap-2.5 w-full">
+                              {renderInlineStatusBadge(
+                                p.contentStatus,
+                                "Content",
+                              )}
+                              {renderInlineStatusBadge(
+                                p.thumbnailStatus,
+                                "Thumbnail",
+                              )}
+                            </div>
+                            <div className="mt-2 pt-2 font-bold tracking-widest border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
+                              <span>
+                                Created{" "}
+                                {`${new Date(p.date).getDate()}-${new Date(p.date).getMonth() + 1}-${new Date(p.date).getFullYear()}`}
+                              </span>
+                            </div>
                           </div>
-                          <div className="mt-2 pt-2 font-bold tracking-widest border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
-                            <span>
-                              Created{" "}
-                              {`${new Date(p.date).getDate()}-${new Date(p.date).getMonth() + 1}-${new Date(p.date).getFullYear()}`}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
               </div>

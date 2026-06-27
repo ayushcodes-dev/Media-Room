@@ -8,7 +8,7 @@ export const signin = async (email, password) => {
   } catch (error) {
     console.log(error.response)
     return {
-      error: error.response.data || {message:"An error occurred during sign-in."},
+      error: error.response.data ? error.response.data: {message:"An error occurred during sign-in."},
       success: false,
     };
   }
@@ -31,7 +31,7 @@ export const signup = async ({username, email, password, OTPsended, OTP, setUser
     return data;
   } catch (error) {
     return {
-      error: error.response.data || {
+      error: error.response.data ?error.response.data : {
         message: "An error occurred during sign-up.",
       },
       success: false,
@@ -56,7 +56,7 @@ provider,
   } catch (error) {
     console.log(error.response.data)
     return {
-      error: error.response.data || {
+      error: error.response.data?error.response.data : {
         message: "An error occurred during sign-in with  "+provider,
       },
       success: false,
@@ -81,7 +81,7 @@ export const provider_callback = async ({ provider,allParams }) => {
   } catch (error) {
     console.log("error", error);
     return {
-      error: error.response.data || {
+      error: error.response.data ?error.response.data : {
         message: "An error occurred during authentication with  " + provider,
       },
       success: false,
@@ -93,10 +93,11 @@ export const getAuthstatus = async () => {
   try {
     const response = await api.get("/auth/status");
     const data = response.data;
+   //console.log("getting auth status",data)
     return data;
   } catch (error) {
     return {
-      error: error.response.data || {
+      error: error.response.data? error.response.data: {
         message: "An error occurred during gettting auth status",
       },
       success: false,

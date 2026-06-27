@@ -19,9 +19,12 @@ import SkeletonLoading from "./skeletonLoading";
 import copyToClipboard from "@/utility/copyToClipboard.js";
 import getProjectStatus from "@/features/project/status.project.js";
 import Toaster1 from "@/component/toaster/toaster1.jsx";
-import getProjectByID from "@/features/project/get.project.js"
+import getProjectByID from "@/features/project/get.project.js";
 import { useContext } from "react";
+import projectContext from "@/context/project.js";
 import projectStatusContext from "@/context/projectStatus.js";
+import SEODataChooser from "@/component/utility/seoDataChooser.jsx";
+
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
@@ -57,10 +60,17 @@ export default function App() {
   //const { project, setProject } = UseProject();
   const [toasterData, setToasterData] = useState([]);
 
+  //const [videoDesc, setVideoDesc] = useState("");
+  // const [customPrompt, setCustomPrompt] = useState("");
+  // const { projectID } = useParams();
   // Skeleton Loading Simulator State
   const [isLoading] = useState(false);
+  const { projectData, setProjectData } = useContext(projectContext);
+  const [currentProjectData, setCurrentProjectData] = useState();
+  const [activeSEOData, setActiveSEOData] = useState(0);
+  // Skeleton Load ing Simulator State
+  //const [isLoading] = useState(false);
 
-  
   async function handleDashboard() {
     const res = await getProjectStatus({
       projectStatus,
@@ -71,6 +81,13 @@ export default function App() {
       //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
     }
   }
+  // sets current project
+  useEffect(() => {
+    if (projectData[0]) {
+      setCurrentProjectData({ ...projectData[0] });
+    }
+  }, [projectData]);
+
   useEffect(() => {
     document.title = "Dashboard | Media Room";
     handleDashboard();
@@ -123,8 +140,7 @@ export default function App() {
                       Last Project
                     </h3>
                   </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  <div className="grid  lg:grid-cols-4 gap-6 mt-10">
                     {/* METADATA EXPORT COLUMN */}
                     <div className="lg:col-span-2 space-y-6">
                       <GlassCard
@@ -136,25 +152,31 @@ export default function App() {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
                             <div>
                               <h2 className="text-2xl font-black text-white tracking-tight">
-                                pikachu
                                 {/* {selectedProject.name} */}
                               </h2>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full justify-between">
                               <NeonButton2
                                 onClick={() =>
                                   copyToClipboard("hello", "metadata file")
                                 }
                                 variant="secondary"
                                 icon={Share2}
-                                className="text-[11px] px-3.5 py-2"
+                                className="lg:text-md text-xs lg:px-3.5 lg:py-2 px-1 py-1"
                               >
                                 Export JSON
                               </NeonButton2>
+                              {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                                <p className="text-white/80 inline-block ">
+                                  status :
+                                </p>
+                                <p className="text-white/50 tracking-wider">
+                                  generating...
+                                </p>
+                              </div> */}
                             </div>
                           </div>
-
                           {/* METADATA FIELDS */}
                           <div className="space-y-5">
                             {/* TITLE CONTAINER */}
@@ -164,22 +186,34 @@ export default function App() {
                                   <Sparkles className="w-3.5 h-3.5 text-sky-400" />
                                   Optimized Title
                                 </span>
+                                {/* {console.log("line 275", currentProjectData)} */}
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      "selectedProject.title",
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            currentProjectData.seoData.length -
+                                              1
+                                          ].title
+                                        : "",
                                       "Title",
                                     )
                                   }
                                   className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
                                   title="Copy Title"
                                 >
+                                  {/* {currentProjectData?.seoData[currentProjectData.seoData.length-1]
+                                    ? currentProjectData.seoData[currentProjectData.seoData.length-1].title
+                                    : ""} */}
                                   <Copy className="w-3 h-3" />
                                   Copy
                                 </button>
                               </div>
                               <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
-                                {/* {selectedProject.title} */}
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[activeSEOData]
+                                      .title
+                                  : ""}
                               </p>
                             </div>
 
@@ -193,7 +227,12 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      "selectedProject.description",
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            currentProjectData.seoData.length -
+                                              1
+                                          ].description
+                                        : "",
                                       "Description",
                                     )
                                   }
@@ -205,7 +244,10 @@ export default function App() {
                                 </button>
                               </div>
                               <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
-                                {/* {selectedProject.description} */}
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[activeSEOData]
+                                      .description
+                                  : ""}
                               </p>
                             </div>
 
@@ -219,7 +261,12 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      " selectedProject.tags",
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            currentProjectData.seoData.length -
+                                              1
+                                          ].tags.join(",")
+                                        : "",
                                       "SEO Tags",
                                     )
                                   }
@@ -231,19 +278,30 @@ export default function App() {
                                 </button>
                               </div>
                               <div className="flex flex-wrap gap-1.5 pr-6">
-                                {/* {selectedProject.tags
-                                  .split(",")
-                                  .map((tag, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
-                                    >
-                                      #{tag.trim()}
-                                    </span>
-                                  ))} */}
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[
+                                      activeSEOData
+                                    ].tags
+                                      .join(",")
+                                      .split(",")
+                                      .map((tag, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
+                                        >
+                                          #{tag.trim()}
+                                        </span>
+                                      ))
+                                  : ""}
                               </div>
                             </div>
                           </div>
+
+                          <SEODataChooser
+                            items={currentProjectData?.seoData}
+                            activeIndex={activeSEOData}
+                            onChange={setActiveSEOData}
+                          />
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
@@ -262,8 +320,14 @@ export default function App() {
                           <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
                             <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                               <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                              Visual Asset Preview
+                              Thumbnail Preview
                             </span>
+                            {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                              <p className="text-white/80">status :</p>
+                              <p className="text-white/50 tracking-wider">
+                                generating...
+                              </p>
+                            </div> */}
                           </div>
 
                           {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
@@ -302,7 +366,11 @@ export default function App() {
                               <button
                                 onClick={() =>
                                   copyToClipboard(
-                                    "selectedProject.prompt",
+                                    currentProjectData?.seoData[activeSEOData]
+                                      ? currentProjectData.seoData[
+                                          activeSEOData
+                                        ].thumbnailDescription
+                                      : "",
                                     "Thumbnail Prompt",
                                   )
                                 }
@@ -314,7 +382,10 @@ export default function App() {
                               </button>
                             </div>
                             <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
-                              {/* "{  }" */}
+                              {currentProjectData?.seoData[activeSEOData]
+                                ? currentProjectData.seoData[activeSEOData]
+                                    .thumbnailDescription
+                                : ""}
                             </p>
                           </div>
                         </div>

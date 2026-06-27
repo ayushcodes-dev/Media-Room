@@ -3,16 +3,22 @@ const Button = ({
   variant = "primary",
   className = "",
   icon: Icon,
+  disabled = false, // Added disabled prop
   ...props
 }) => {
   const baseStyles =
-    "group relative px-8 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-2 overflow-hidden";
+    " relative px-8 py-4 rounded-2xl font-bold lg:text-lg text-md transition-all active:scale-95 flex items-center justify-center  overflow-hidden";
+
+  // Added disabled styles mapping
+  const disabledStyles = disabled
+    ? "opacity-50 cursor-not-allowed pointer-events-none grayscale-[0.5]"
+    : "";
 
   const variants = {
     primary:
       "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:scale-105",
     secondary:
-      "border border-white/10 bg-white/5 backdrop-blur-xl text-white hover:bg-white/10",
+      "border border-cyan-500/50 bg-white/5 border-2 backdrop-blur-xl text-white hover:bg-white/10 hover:border-cyan-500/80",
     outline:
       "bg-white/5 border border-white/10 px-5 py-2 rounded-full hover:bg-white/10 transition-all backdrop-blur-sm text-sm font-medium text-slate-400 hover:text-white",
     ghost:
@@ -23,22 +29,25 @@ const Button = ({
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${className}`}
+      disabled={disabled} // Native button attribute
+      className={`${baseStyles} ${variants[variant]} ${disabledStyles} ${className}`}
       {...props}
     >
-      <span className="relative z-10 flex items-center gap-2">
+      <span className="relative flex items-center gap-2">
         {children}
         {Icon && (
           <Icon
             size={20}
-            className="group-hover:translate-x-1 transition-transform"
+            className={`${disabled ? "" : "group-hover:translate-x-1"} transition-transform`}
           />
         )}
       </span>
-      {variant === "primary" && (
+      {/* Disable the hover animation if button is disabled */}
+      {variant === "primary" && !disabled && (
         <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -translate-x-full" />
       )}
     </button>
   );
 };
-export default Button 
+
+export default Button;

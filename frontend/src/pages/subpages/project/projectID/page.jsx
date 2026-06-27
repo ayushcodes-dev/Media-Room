@@ -1,6 +1,6 @@
 import SubPage from "@/wrapper/subPage";
 import Protect from "@/wrapper/protect";
-
+import TextArea from "@/component/input/textArea.jsx";
 import { useState, useEffect } from "react";
 import {
   Copy,
@@ -10,18 +10,21 @@ import {
   FileText,
   Share2,
   ChevronRight,
+  CircleDollarSign,
 } from "lucide-react";
-
+import { useParams } from "react-router-dom";
 import MainPageHeader from "@/component/header/mainPage.jsx";
 import GlassCard from "@/component/cards/glassCard";
 import { NeonButton2 } from "@/component/button/neonButton.jsx";
-
-import copyToClipboard from "@/utility/copyToClipboard.js";
-import getProjectStatus from "@/features/project/status.project.js";
+import Button1 from "@/component/button/button1.jsx";
+import copyToClipboard from "@/utility/copyToClipboard.js"; 
 import Toaster1 from "@/component/toaster/toaster1.jsx";
-
+import generateSEOData from "@/features/generate/seoData.generate.js";
 import { useContext } from "react";
 import projectStatusContext from "@/context/projectStatus.js";
+import projectContext from "@/context/project.js";
+import getProjectByID from "@/features/project/get.project.js";
+import SEODataChooser from "@/component/utility/seoDataChooser.jsx"
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
@@ -53,27 +56,59 @@ export const SkeletonLoader = () => {
 // ==========================================
 
 export default function App() {
-  const { projectStatus, setprojectStatus } = useContext(projectStatusContext);
+  const { projectStatus } = useContext(projectStatusContext);
   //const { project, setProject } = UseProject();
   const [toasterData, setToasterData] = useState([]);
-
+  const [videoDesc, setVideoDesc] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
+  const { projectID } = useParams();
   // Skeleton Loading Simulator State
   const [isLoading] = useState(false);
+  const [seoButtonDisable, setSeoButtonDisable] = useState(true);
+  const { projectData, setProjectData } = useContext(projectContext);
+  const [currentProjectData, setCurrentProjectData] = useState();
+  const [activeSEOData, setActiveSEOData]= useState(0)
 
-  async function handleDashboard() {
-    const res = await getProjectStatus({
-      projectStatus,
-      setprojectStatus,
-      setToasterData,
-    });
-    if (res && res.length > 0) {
-      //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
-    }
+// gets project data
+  async function handleApp() {
+    const data = await getProjectByID(
+      { projectID: projectID },
+      { setProjectData },
+    );
+   
+
+  //  console.log(data);
   }
   useEffect(() => {
     document.title = "Dashboard | Media Room";
-    handleDashboard();
+    handleApp();
   }, []);
+
+
+  //  handle toggle of button -- disable or enable
+  useEffect(() => {
+    if (videoDesc.trim().length < 5) {
+      setSeoButtonDisable(true);
+    } else {
+      setSeoButtonDisable(false);
+    }
+  }, [videoDesc]);
+
+  // sets current project
+  useEffect(() => {
+   
+    const project = projectData.find((data) => data.projectID === projectID);
+    if (project) {
+      //console.log("useeffect", project);
+      setCurrentProjectData({ ...project });
+      setVideoDesc(
+        project.videoDescription ? project.videoDescription : videoDesc,
+      );
+       setSeoButtonDisable(true);
+    }
+   
+  }, [projectData]);
+
 
   // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
   const renderInlineStatusBadge = (status, label) => {
@@ -108,10 +143,18 @@ export default function App() {
                 title="Project"
                 description="Select and manage your metadata blueprints for YouTube
           content creation"
-                
-              />
-              {/* DYNAMIC METADATA WORKSPACES */}
-
+              />{" "}
+              {/* project name */}
+              <div className="flex items-center pl-0.5 mb-10">
+                {/* Glowing sky-blue vertical indicator bar on title */}
+                <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3 " />
+                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
+                  {
+                    projectStatus.find((p) => p.projectID === projectID)
+                      ?.projectName
+                  }
+                </h3>
+              </div>
               <div className="space-y-8 animate-fade-in">
                 {/* LAST PROJECT */}
                 <div className="space-y-4">
@@ -121,8 +164,80 @@ export default function App() {
                       hello
                     </h3>
                   </div> */}
-
-                  <div className="grid  lg:grid-cols-4 gap-6">
+                  <div className="grid lg:grid-cols-2  w-full gap-6">
+                    <TextArea
+                      label="Video Description"
+                      icon="Icon"
+                      type="text"
+                      placeholder="describe your video"
+                      id="video desc"
+                      autoComplete="video description"
+                      state={videoDesc}
+                      setState={setVideoDesc}
+                      value={videoDesc}
+                      onChange={(e) => {
+                        setVideoDesc(
+                          e.target.currentValue
+                            ? e.target.currentValue
+                            : videoDesc,
+                        );
+                      }}
+                    />
+                    <TextArea
+                      label="Custom Thumbnail Prompt (optional)"
+                      icon="Icon"
+                      type="text"
+                      placeholder="add custom thumbanil prompt"
+                      id="video desc"
+                      autoComplete="video description"
+                      state={customPrompt}
+                      setState={setCustomPrompt}
+                      value={customPrompt}
+                      onChange={(e) => {
+                        setVideoDesc(
+                          e.target.currentValue
+                            ? e.target.currentValue
+                            : videoDesc,
+                        );
+                      }}
+                    />
+                  </div>
+                  <div className="grid lg:grid-cols-2  w-full  gap-10 my-5 ">
+                    <Button1
+                      className=" w-full lg:w-[80%] mx-auto flex gap-20 "
+                      disabled={seoButtonDisable}
+                      variant="secondary"
+                      //   disabled={true}
+                      onClick={() => {
+                        generateSEOData(
+                          { projectID, videoDescription: videoDesc },
+                          {
+                            currentProjectData,
+                            setToasterData,
+                            setProjectData,
+                            setSeoButtonDisable,
+                            setActiveSEOData,
+                          },
+                        );
+                      }}
+                    >
+                      <div> Generate SEO Data </div>
+                      <div>
+                        <p>( 5 credit )</p>
+                      </div>
+                    </Button1>
+                    <Button1
+                      className="w-full lg:w-[80%] mx-auto flex gap-20 "
+                      variant="primary"
+                      //   disabled={true}
+                    >
+                      <div> Generate Thumbnail</div>
+                      <div>
+                        <p>( 20 credit )</p>
+                      </div>
+                    </Button1>
+                  </div>
+                  <div className="grid  lg:grid-cols-4 gap-6 mt-30">
                     {/* METADATA EXPORT COLUMN */}
                     <div className="lg:col-span-2 space-y-6">
                       <GlassCard
@@ -138,20 +253,27 @@ export default function App() {
                               </h2>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full justify-between">
                               <NeonButton2
                                 onClick={() =>
                                   copyToClipboard("hello", "metadata file")
                                 }
                                 variant="secondary"
                                 icon={Share2}
-                                className="text-[11px] px-3.5 py-2"
+                                className="lg:text-md text-xs lg:px-3.5 lg:py-2 px-1 py-1"
                               >
                                 Export JSON
                               </NeonButton2>
+                              {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                                <p className="text-white/80 inline-block ">
+                                  status :
+                                </p>
+                                <p className="text-white/50 tracking-wider">
+                                  generating...
+                                </p>
+                              </div> */}
                             </div>
                           </div>
-
                           {/* METADATA FIELDS */}
                           <div className="space-y-5">
                             {/* TITLE CONTAINER */}
@@ -161,22 +283,34 @@ export default function App() {
                                   <Sparkles className="w-3.5 h-3.5 text-sky-400" />
                                   Optimized Title
                                 </span>
+                                {/* {console.log("line 275", currentProjectData)} */}
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      "selectedProject.title",
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            currentProjectData.seoData.length -
+                                              1
+                                          ].title
+                                        : "",
                                       "Title",
                                     )
                                   }
                                   className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
                                   title="Copy Title"
                                 >
+                                  {/* {currentProjectData?.seoData[currentProjectData.seoData.length-1]
+                                    ? currentProjectData.seoData[currentProjectData.seoData.length-1].title
+                                    : ""} */}
                                   <Copy className="w-3 h-3" />
                                   Copy
                                 </button>
                               </div>
                               <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
-                                {/* {selectedProject.title} */}
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[activeSEOData]
+                                      .title
+                                  : ""}
                               </p>
                             </div>
 
@@ -190,7 +324,12 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      "selectedProject.description",
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            currentProjectData.seoData.length -
+                                              1
+                                          ].description
+                                        : "",
                                       "Description",
                                     )
                                   }
@@ -202,7 +341,10 @@ export default function App() {
                                 </button>
                               </div>
                               <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
-                                {/* {selectedProject.description} */}
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[activeSEOData]
+                                      .description
+                                  : ""}
                               </p>
                             </div>
 
@@ -216,7 +358,12 @@ export default function App() {
                                 <button
                                   onClick={() =>
                                     copyToClipboard(
-                                      " selectedProject.tags",
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            currentProjectData.seoData.length -
+                                              1
+                                          ].tags.join(",")
+                                        : "",
                                       "SEO Tags",
                                     )
                                   }
@@ -228,19 +375,30 @@ export default function App() {
                                 </button>
                               </div>
                               <div className="flex flex-wrap gap-1.5 pr-6">
-                                {/* {selectedProject.tags
-                                  .split(",")
-                                  .map((tag, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
-                                    >
-                                      #{tag.trim()}
-                                    </span>
-                                  ))} */}
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[
+                                      activeSEOData
+                                    ].tags
+                                      .join(",")
+                                      .split(",")
+                                      .map((tag, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
+                                        >
+                                          #{tag.trim()}
+                                        </span>
+                                      ))
+                                  : ""}
                               </div>
                             </div>
                           </div>
+                        
+                          <SEODataChooser
+                            items={currentProjectData?.seoData}
+                            activeIndex={activeSEOData}
+                            onChange={setActiveSEOData}
+                          />
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
@@ -259,8 +417,14 @@ export default function App() {
                           <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
                             <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                               <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                              Visual Asset Preview
+                              Thumbnail Preview
                             </span>
+                            {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                              <p className="text-white/80">status :</p>
+                              <p className="text-white/50 tracking-wider">
+                                generating...
+                              </p>
+                            </div> */}
                           </div>
 
                           {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
@@ -299,7 +463,11 @@ export default function App() {
                               <button
                                 onClick={() =>
                                   copyToClipboard(
-                                    "selectedProject.prompt",
+                                    currentProjectData?.seoData[activeSEOData]
+                                      ? currentProjectData.seoData[
+                                          activeSEOData
+                                        ].thumbnailDescription
+                                      : "",
                                     "Thumbnail Prompt",
                                   )
                                 }
@@ -311,7 +479,10 @@ export default function App() {
                               </button>
                             </div>
                             <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
-                              {/* "{  }" */}
+                              {currentProjectData?.seoData[activeSEOData]
+                                ? currentProjectData.seoData[activeSEOData]
+                                    .thumbnailDescription
+                                : "not available"}
                             </p>
                           </div>
                         </div>

@@ -2,10 +2,10 @@ import { useState } from "react";
 import projectContext from "@/context/project.js";
 
 export default function ProjectProvider({ children }) {
-  const [projectStatus, setProject] = useState([]);
+  const [projectData, setProjectData] = useState([]);
 
   return (
-    <projectContext.Provider value={{ projectStatus, setProject }}>
+    <projectContext.Provider value={{ projectData, setProjectData }}>
       {children}
     </projectContext.Provider>
   );

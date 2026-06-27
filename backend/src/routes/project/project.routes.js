@@ -103,7 +103,7 @@ router.delete("/project/:projectID", async (req, res) => {
   }
 });
 /**
- * @route   DELETE /project/:projectID/rename
+ * @route   PATCH /project/:projectID/rename
  * @desc    rename project
  * @access  Private
  */
