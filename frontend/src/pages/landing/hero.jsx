@@ -20,7 +20,9 @@ const Hero = () => (
     </p>
 
     <div className="flex justify-center px-6">
-      <Button variant="primary" icon={ArrowRight}>
+      <Button variant="primary" icon={ArrowRight} onClick={()=>{
+        window.location.href="/dashboard"
+      }}>
         👉 Start Growing Now
       </Button>
     </div>

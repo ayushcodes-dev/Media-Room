@@ -50,13 +50,14 @@ const App = () => {
   const {user} = useAuth()
   const navigate = useNavigate()
   useEffect(() => {
+    console.log(user)
     if (user.isAuthenticated) {
       return navigate("/dashboard");
     }
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [user.isAuthenticated]);
   console.log(user)
 
   return (
@@ -158,6 +159,9 @@ const App = () => {
             variant="white"
             icon={ArrowRight}
             className="px-12 py-5 mx-auto"
+            onClick={() => {
+              window.location.href = "/dashboard";
+            }}
           >
             GET EARLY ACCESS NOW
           </Button>
