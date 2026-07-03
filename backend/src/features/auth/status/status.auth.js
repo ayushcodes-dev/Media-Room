@@ -2,11 +2,12 @@ function handleStatus(req) {
   
   const data = {
     isAuthenticated: req.session?req.session.isAuthenticated :false,
-    userID:req.session?req.session.userId : null,
+    userID:req.session?req.session.userID : null,
     username:req.session?req.session.username :null,
     email: req.session?req.session.email : null,
     role: req.session?req.session.role : null,
   };
+  console.log("status data",data);
 
   return {
     success: true,
