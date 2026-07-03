@@ -1,4 +1,5 @@
 function handleStatus(req) {
+  
   const data = {
     isAuthenticated: req.session?req.session.isAuthenticated :false,
     userID:req.session?req.session.userId : null,

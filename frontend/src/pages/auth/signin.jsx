@@ -80,7 +80,10 @@ const SignInForm = ({
             onSigninWithProvider("google");
           }}
         >
-          <GoogleIcon /> GOOGLE
+          <div className="h-5 w-5 flex justify-center ">
+            <GoogleIcon />
+          </div>
+          GOOGLE
         </NeonButton>
         <NeonButton
           variant="ghost"
@@ -89,7 +92,10 @@ const SignInForm = ({
             onSigninWithProvider("github`");
           }}
         >
-          <GithubIcon /> GITHUB
+          <div className="h-5 w-5 flex justify-center ">
+            <GithubIcon />
+          </div>
+          GITHUB
         </NeonButton>
       </div>
 
