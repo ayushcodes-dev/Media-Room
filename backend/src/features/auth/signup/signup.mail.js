@@ -3,21 +3,21 @@ import { OTPValidationTime } from "#/utility.js";
 async function sendSignupOTP(email, OTP) {
     try {
         const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 465,
-            secure: true,
-            auth: {
-                user: process.env.E_MAIL,
-                pass: process.env.E_MAIL_SENDER_PASS // App password
-            }
+          host: "smtp.gmail.com",
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: process.env.E_MAIL,
+            pass: process.env.E_MAIL_SENDER_PASS, // App password
+          },
         });
 
         await transporter.verify();
 
               const info = await transporter.sendMail({
-            from: `VidFly`,
+            from: `Media Room`,
             to: email,
-            subject: "VidFly - Signup OTP",
+            subject: "Mediqa Room - Signup OTP",
             text: `Your OTP is ${OTP}`, // fallback plain text
             html: `
 <div style="margin:0;padding:0;background:#0F172A;width:100%;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
