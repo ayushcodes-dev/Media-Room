@@ -1,25 +1,9 @@
-import nodemailer from "nodemailer";
+//import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
 import { OTPValidationTime } from "#/utility.js";
 async function sendSignupOTP(email, OTP) {
-    try {
-        const transporter = nodemailer.createTransport({
-          host: "smtp.gmail.com",
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: process.env.E_MAIL,
-            pass: process.env.E_MAIL_SENDER_PASS, // App password
-          },
-        });
-
-        await transporter.verify();
-
-              const info = await transporter.sendMail({
-            from: `Media Room`,
-            to: email,
-            subject: "Mediqa Room - Signup OTP",
-            text: `Your OTP is ${OTP}`, // fallback plain text
-            html: `
+  const htmlContent = `
 <div style="margin:0;padding:0;background:#0F172A;width:100%;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0F172A;padding:40px 0;">
     <tr>
@@ -81,15 +65,66 @@ async function sendSignupOTP(email, OTP) {
       </td>
     </tr>
   </table>
-</div>`
-        });
+</div>`;
+  try {
+    // const transporter = nodemailer.createTransport({
+    //   host: "smtp.gmail.com",
+    //   port: 587,
+    //   secure: false, // true for 465, false for other ports
+    //   auth: {
+    //     user: process.env.E_MAIL,
+    //     pass: process.env.E_MAIL_SENDER_PASS, // App password
+    //   },
+    // });
 
-        //console.log("OTP sent:", info.messageId);
-        return true;
-    } catch (error) {
-        console.error("Error sending OTP:", error);
-        return false;
-    }
+    // await transporter.verify();
+
+    //const resend = new Resend(process.env.E_MAIL_RESEND_KEY);
+
+    // const info = await transporter.emails.send({
+    //   from: `onboarding@resend.dev`,
+    //   to: email,
+    //   subject: "Media Room - Signup OTP",
+    //   text: `Your OTP is ${OTP}`, // fallback plain text
+    //   html: htmlContent,
+    // });
+    // Build the payload with your dynamic variables
+    const emailPayload = {
+      service_id: process.env.EMAIL_SERVICE_ID,
+      template_id: process.env.EMAIL_TEMPLATE_ID,
+      user_id: process.env.EMAIL_USER_ID,
+      accessToken: process.env.EMAIL_ACCESS_TOKEN,
+      template_params: {
+        title: "verify on media room",
+        OTP: OTP,
+        OTPValidationTime: OTPValidationTime,
+        to_email: email,
+        name: "Media Room",
+      },
+    };
+  const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(emailPayload),
+  });
+
+  // Check if the response is successful
+  if (response.ok) {
+    console.log("Success! Your email has been fired off.");
+  } else {
+    // If server returns an error code, extract and throw the error text
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
+    //console.log("OTP sent:", info.messageId);
+   /// console.log(info);
+    return true;
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    return false;
+  }
 }
 
 export default sendSignupOTP;

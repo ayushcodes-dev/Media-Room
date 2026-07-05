@@ -7,7 +7,7 @@ function handleStatus(req) {
     email: req.session?req.session.email : null,
     role: req.session?req.session.role : null,
   };
-  console.log("status data",data);
+  console.log("status data",req.session);
 
   return {
     success: true,
