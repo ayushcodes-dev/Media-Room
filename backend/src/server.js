@@ -40,7 +40,7 @@ async function startServer() {
   /**
    * description : middleware to parse cookie into json
    */
-  app.use(cookieParser("ayush"));
+  app.use(cookieParser());
   /**
    * @desc   connecting to MongoDB using Mongoose
    */

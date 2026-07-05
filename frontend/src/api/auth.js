@@ -91,7 +91,8 @@ export const provider_callback = async ({ provider,allParams }) => {
 
 export const getAuthstatus = async () => {
   try {
-    const response = await api.get("/auth/status");
+   
+    const response = await api.get("/auth/status", { withCredentials: true });
     const data = response.data;
    //console.log("getting auth status",data)
     return data;

@@ -1,5 +1,5 @@
 function handleStatus(req) {
-  
+  console.log("cookies" , req.cookies);
   const data = {
     isAuthenticated: req.session?req.session.isAuthenticated :false,
     userID:req.session?req.session.userID : null,
