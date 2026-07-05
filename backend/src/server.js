@@ -17,7 +17,7 @@ async function startServer() {
    */
   dns.setServers(["8.8.8.8", "1.1.1.1"]);
   dns.setDefaultResultOrder("ipv4first");
-  //app.set("trust proxy", 1);
+  app.set("trust proxy", 1);
   /**
    * @desc  handles all configration
    */
