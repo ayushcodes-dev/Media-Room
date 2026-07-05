@@ -134,7 +134,9 @@ async function handleSignin(req, Data) {
     Data.role= user.role
     Data.username = user.username
     authenticateInSession(req, Data);
+    console.log("-------------------------------------------")
     console.log(req.session);
+    console.log("-------------------------------------------")
     return {
         success: true,
         statusCode: 200,
