@@ -15,7 +15,7 @@ import {
 import MainPageHeader from "@/component/header/mainPage.jsx";
 import GlassCard from "@/component/cards/glassCard";
 import { NeonButton2 } from "@/component/button/neonButton.jsx";
-import SkeletonLoading from "./skeletonLoading";
+import SeoDataSkeleton from "@/component/loader/seoDataSkeleton.jsx";
 import copyToClipboard from "@/utility/copyToClipboard.js";
 import getProjectStatus from "@/features/project/status.project.js";
 import Toaster1 from "@/component/toaster/toaster1.jsx";
@@ -24,6 +24,8 @@ import { useContext } from "react";
 import projectContext from "@/context/project.js";
 import projectStatusContext from "@/context/projectStatus.js";
 import SEODataChooser from "@/component/utility/seoDataChooser.jsx";
+import NoProjects from "@/component/notFound/NoProjects.jsx";
+import NoSeoData from "@/component/notFound/NoSeoData.jsx";
 
 // ==========================================
 // MOCK DATA & CONSTANTS
@@ -57,6 +59,7 @@ export const SkeletonLoader = () => {
 
 export default function App() {
   const { projectStatus, setprojectStatus } = useContext(projectStatusContext);
+  const { projectData, setProjectData } = useContext(projectContext);
   //const { project, setProject } = UseProject();
   const [toasterData, setToasterData] = useState([]);
 
@@ -64,10 +67,18 @@ export default function App() {
   // const [customPrompt, setCustomPrompt] = useState("");
   // const { projectID } = useParams();
   // Skeleton Loading Simulator State
-  const [isLoading] = useState(false);
-  const { projectData, setProjectData } = useContext(projectContext);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [currentProjectData, setCurrentProjectData] = useState();
   const [activeSEOData, setActiveSEOData] = useState(0);
+
+  const currentProjectStatus = projectStatus?.find(
+    (p) => p.projectID === projectStatus[0]?.projectID,
+  );
+  const seoDataGenerated = !!(
+    currentProjectData?.seoData && currentProjectData.seoData.length > 0
+  );
+  const thumbnailGenerated = currentProjectStatus?.thumbnailStatus === "ready";
   // Skeleton Load ing Simulator State
   //const [isLoading] = useState(false);
 
@@ -77,21 +88,37 @@ export default function App() {
       setprojectStatus,
       setToasterData,
     });
+
     if (res && res.length > 0) {
+    
       //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
-    }
+    } 
   }
+  useEffect(() => {
+    document.title = "Dashboard | Media Room";
+    handleDashboard();
+  }, []);
   // sets current project
   useEffect(() => {
     if (projectData[0]) {
       setCurrentProjectData({ ...projectData[0] });
     }
   }, [projectData]);
-
   useEffect(() => {
-    document.title = "Dashboard | Media Room";
-    handleDashboard();
-  }, []);
+    async function fetchProjectData() {
+    
+      if (projectStatus && projectStatus.length > 0) {
+        const data = await getProjectByID(
+          { projectID: projectStatus[0].projectID },
+          { setProjectData },
+        );
+       
+        //  console.log("project data", data);
+        setIsLoading(false);
+      }
+    }
+    fetchProjectData();
+  }, [projectStatus]);
 
   // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
   const renderInlineStatusBadge = (status, label) => {
@@ -118,56 +145,75 @@ export default function App() {
 
         <div>
           {/* MAIN CONTENT AREA */}
-          {isLoading ? (
-            <SkeletonLoading />
-          ) : (
-            <main className="flex-1 px-4 md:px-8 py-6 mb-20 md:py-8 max-w-7xl mx-auto w-full space-y-6 ">
-              {/* TOP DASHBOARD CONTROL PANEL */}
-              <MainPageHeader
-                title="Your Dashboard"
-                description="Select and manage your metadata blueprints for YouTube
+
+          <main className="flex-1 px-4 md:px-8 py-6 mb-20 md:py-8 max-w-7xl mx-auto w-full space-y-6 ">
+            {/* TOP DASHBOARD CONTROL PANEL */}
+            <MainPageHeader
+              title="Your Dashboard"
+              description="Select and manage your metadata blueprints for YouTube
           content creation"
-                createProjectButton={true}
-              />
-              {/* DYNAMIC METADATA WORKSPACES */}
+              createProjectButton={true}
+            />
+            {/* DYNAMIC METADATA WORKSPACES */}
 
-              <div className="space-y-8 animate-fade-in">
-                {/* LAST PROJECT */}
-                <div className="space-y-4">
-                  <div className="flex items-center pl-0.5">
-                    <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-sky-400">
-                      Last Project
-                    </h3>
-                  </div>
-                  <div className="grid  lg:grid-cols-4 gap-6 mt-10">
-                    {/* METADATA EXPORT COLUMN */}
-                    <div className="lg:col-span-2 space-y-6">
-                      <GlassCard
-                        hoverEffect={false}
-                        className="h-full flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-                      >
-                        <div>
-                          {/* Workspace heading */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
+            <div className="space-y-8 animate-fade-in">
+              {/* LAST PROJECT */}
+              <div className="space-y-4">
+                <div className="flex items-center pl-0.5">
+                  <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-sky-400">
+                    Last Project
+                  </h3>
+                </div>
+                <div className=" mt-10">
+                  {!isLoading &&
+                  (!projectStatus || projectStatus.length === 0) ? (
+                    <NoProjects />
+                  ) : isLoading ? (
+                    <SeoDataSkeleton />
+                  ) : !seoDataGenerated && !thumbnailGenerated ? (
+                    <NoSeoData
+                      seoDataGenerated={seoDataGenerated}
+                      thumbnailGenerated={thumbnailGenerated}
+                      projectID={projectStatus[0].projectID}
+                    />
+                  ) : (
+                    <div className="grid  xl:grid-cols-4 gap-6 mt-10">
+                      {/* METADATA EXPORT COLUMN */}
+                      <div className="xl:col-span-2 space-y-6">
+                        {!seoDataGenerated ? (
+                          <NoSeoData
+                            seoDataGenerated={seoDataGenerated}
+                            thumbnailGenerated={thumbnailGenerated}
+                            type="seo"
+                            projectID={projectStatus[0].projectID}
+                          />
+                        ) : (
+                          <GlassCard
+                            hoverEffect={false}
+                            className="h-full flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                          >
                             <div>
-                              <h2 className="text-2xl font-black text-white tracking-tight">
-                                {/* {selectedProject.name} */}
-                              </h2>
-                            </div>
+                              {/* Workspace heading */}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
+                                <div>
+                                  <h2 className="text-2xl font-black text-white tracking-tight">
+                                    {/* {selectedProject.name} */}
+                                  </h2>
+                                </div>
 
-                            <div className="flex items-center gap-2 w-full justify-between">
-                              <NeonButton2
-                                onClick={() =>
-                                  copyToClipboard("hello", "metadata file")
-                                }
-                                variant="secondary"
-                                icon={Share2}
-                                className="lg:text-md text-xs lg:px-3.5 lg:py-2 px-1 py-1"
-                              >
-                                Export JSON
-                              </NeonButton2>
-                              {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                                <div className="flex items-center gap-2 w-full justify-between">
+                                  <NeonButton2
+                                    onClick={() =>
+                                      copyToClipboard("hello", "metadata file")
+                                    }
+                                    variant="secondary"
+                                    icon={Share2}
+                                    className="lg:text-md text-xs lg:px-3.5 lg:py-2 px-1 py-1"
+                                  >
+                                    Export JSON
+                                  </NeonButton2>
+                                  {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
                                 <p className="text-white/80 inline-block ">
                                   status :
                                 </p>
@@ -175,164 +221,181 @@ export default function App() {
                                   generating...
                                 </p>
                               </div> */}
-                            </div>
-                          </div>
-                          {/* METADATA FIELDS */}
-                          <div className="space-y-5">
-                            {/* TITLE CONTAINER */}
-                            <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-2.5">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-                                  Optimized Title
-                                </span>
-                                {/* {console.log("line 275", currentProjectData)} */}
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            currentProjectData.seoData.length -
-                                              1
-                                          ].title
-                                        : "",
-                                      "Title",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Title"
-                                >
-                                  {/* {currentProjectData?.seoData[currentProjectData.seoData.length-1]
+                                </div>
+                              </div>
+                              {/* METADATA FIELDS */}
+                              <div className="space-y-5">
+                                {/* TITLE CONTAINER */}
+                                <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                  <div className="flex items-center justify-between mb-2.5">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                      <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                                      Optimized Title
+                                    </span>
+                                    {/* {console.log("line 275", currentProjectData)} */}
+                                    <button
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          currentProjectData?.seoData[
+                                            activeSEOData
+                                          ]
+                                            ? currentProjectData.seoData[
+                                                currentProjectData.seoData
+                                                  .length - 1
+                                              ].title
+                                            : "",
+                                          "Title",
+                                        )
+                                      }
+                                      className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                      title="Copy Title"
+                                    >
+                                      {/* {currentProjectData?.seoData[currentProjectData.seoData.length-1]
                                     ? currentProjectData.seoData[currentProjectData.seoData.length-1].title
                                     : ""} */}
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
+                                      <Copy className="w-3 h-3" />
+                                      Copy
+                                    </button>
+                                  </div>
+                                  <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
+                                    {currentProjectData?.seoData[activeSEOData]
+                                      ? currentProjectData.seoData[
+                                          activeSEOData
+                                        ].title
+                                      : ""}
+                                  </p>
+                                </div>
+
+                                {/* DESCRIPTION CONTAINER */}
+                                <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                  <div className="flex items-center justify-between mb-2.5">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                      <FileText className="w-3.5 h-3.5 text-sky-400" />
+                                      AI Generated Video Description
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          currentProjectData?.seoData[
+                                            activeSEOData
+                                          ]
+                                            ? currentProjectData.seoData[
+                                                currentProjectData.seoData
+                                                  .length - 1
+                                              ].description
+                                            : "",
+                                          "Description",
+                                        )
+                                      }
+                                      className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                      title="Copy Description"
+                                    >
+                                      <Copy className="w-3 h-3" />
+                                      Copy
+                                    </button>
+                                  </div>
+                                  <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
+                                    {currentProjectData?.seoData[activeSEOData]
+                                      ? currentProjectData.seoData[
+                                          activeSEOData
+                                        ].description
+                                      : ""}
+                                  </p>
+                                </div>
+
+                                {/* SEO TAGS */}
+                                <div className="relative bg-slate-950/50 border  border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                      <Tag className="w-3.5 h-3.5 text-sky-400" />
+                                      SEO Keyword Tags
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          currentProjectData?.seoData[
+                                            activeSEOData
+                                          ]
+                                            ? currentProjectData.seoData[
+                                                currentProjectData.seoData
+                                                  .length - 1
+                                              ].tags.join(",")
+                                            : "",
+                                          "SEO Tags",
+                                        )
+                                      }
+                                      className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                      title="Copy Tags"
+                                    >
+                                      <Copy className="w-3 h-3" />
+                                      Copy
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5 pr-6">
+                                    {currentProjectData?.seoData[activeSEOData]
+                                      ? currentProjectData.seoData[
+                                          activeSEOData
+                                        ].tags
+                                          .join(",")
+                                          .split(",")
+                                          .map((tag, idx) => (
+                                            <span
+                                              key={idx}
+                                              className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
+                                            >
+                                              #{tag.trim()}
+                                            </span>
+                                          ))
+                                      : ""}
+                                  </div>
+                                </div>
                               </div>
-                              <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[activeSEOData]
-                                      .title
-                                  : ""}
-                              </p>
+
+                              <SEODataChooser
+                                items={currentProjectData?.seoData}
+                                activeIndex={activeSEOData}
+                                onChange={setActiveSEOData}
+                              />
                             </div>
 
-                            {/* DESCRIPTION CONTAINER */}
-                            <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-2.5">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                  <FileText className="w-3.5 h-3.5 text-sky-400" />
-                                  AI Generated Video Description
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            currentProjectData.seoData.length -
-                                              1
-                                          ].description
-                                        : "",
-                                      "Description",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Description"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
-                              </div>
-                              <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[activeSEOData]
-                                      .description
-                                  : ""}
-                              </p>
+                            <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
+                              {/* <span>Created {selectedProject.date}</span> */}
                             </div>
+                          </GlassCard>
+                        )}
+                      </div>
 
-                            {/* SEO TAGS */}
-                            <div className="relative bg-slate-950/50 border  border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                  <Tag className="w-3.5 h-3.5 text-sky-400" />
-                                  SEO Keyword Tags
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            currentProjectData.seoData.length -
-                                              1
-                                          ].tags.join(",")
-                                        : "",
-                                      "SEO Tags",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Tags"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
-                              </div>
-                              <div className="flex flex-wrap gap-1.5 pr-6">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[
-                                      activeSEOData
-                                    ].tags
-                                      .join(",")
-                                      .split(",")
-                                      .map((tag, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
-                                        >
-                                          #{tag.trim()}
-                                        </span>
-                                      ))
-                                  : ""}
-                              </div>
-                            </div>
-                          </div>
-
-                          <SEODataChooser
-                            items={currentProjectData?.seoData}
-                            activeIndex={activeSEOData}
-                            onChange={setActiveSEOData}
+                      {/* VISUAL ASSET PREVIEW COLUMN */}
+                      <div className="lg:col-span-2">
+                        {!thumbnailGenerated ? (
+                          <NoSeoData
+                            seoDataGenerated={seoDataGenerated}
+                            thumbnailGenerated={thumbnailGenerated}
+                            type="thumbnail"
+                            projectID={projectStatus[0].projectID}
                           />
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
-                          {/* <span>Created {selectedProject.date}</span> */}
-                        </div>
-                      </GlassCard>
-                    </div>
-
-                    {/* VISUAL ASSET PREVIEW COLUMN */}
-                    <div className="lg:col-span-2">
-                      <GlassCard
-                        hoverEffect={false}
-                        className="space-y-5 flex flex-col justify-between h-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-                      >
-                        <div className="space-y-5">
-                          <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
-                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                              <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                              Thumbnail Preview
-                            </span>
-                            {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                        ) : (
+                          <GlassCard
+                            hoverEffect={false}
+                            className="space-y-5 flex flex-col justify-between h-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                          >
+                            <div className="space-y-5">
+                              <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
+                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                  <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
+                                  Thumbnail Preview
+                                </span>
+                                {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
                               <p className="text-white/80">status :</p>
                               <p className="text-white/50 tracking-wider">
                                 generating...
                               </p>
                             </div> */}
-                          </div>
+                              </div>
 
-                          {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
-                          <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl">
-                            {/* {selectedProject.thumbnail ? (
+                              {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
+                              <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl">
+                                {/* {selectedProject.thumbnail ? (
                               <>
                                 <img
                                   src={selectedProject.thumbnail}
@@ -355,52 +418,56 @@ export default function App() {
                                 </p>
                               </div>
                             )} */}
-                          </div>
+                              </div>
 
-                          {/* PROMPT SCRIPT PROJECTION */}
-                          <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                            <div className="flex items-center justify-between mb-2.5">
-                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                                AI Thumbnail Prompt
-                              </span>
-                              <button
-                                onClick={() =>
-                                  copyToClipboard(
-                                    currentProjectData?.seoData[activeSEOData]
-                                      ? currentProjectData.seoData[
+                              {/* PROMPT SCRIPT PROJECTION */}
+                              <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                <div className="flex items-center justify-between mb-2.5">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                                    AI Thumbnail Prompt
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        currentProjectData?.seoData[
                                           activeSEOData
-                                        ].thumbnailDescription
-                                      : "",
-                                    "Thumbnail Prompt",
-                                  )
-                                }
-                                className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                title="Copy Prompt"
-                              >
-                                <Copy className="w-3 h-3" />
-                                Copy
-                              </button>
+                                        ]
+                                          ? currentProjectData.seoData[
+                                              activeSEOData
+                                            ].thumbnailDescription
+                                          : "",
+                                        "Thumbnail Prompt",
+                                      )
+                                    }
+                                    className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                    title="Copy Prompt"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                    Copy
+                                  </button>
+                                </div>
+                                <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
+                                  {currentProjectData?.seoData[activeSEOData]
+                                    ? currentProjectData.seoData[activeSEOData]
+                                        .thumbnailDescription
+                                    : ""}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
-                              {currentProjectData?.seoData[activeSEOData]
-                                ? currentProjectData.seoData[activeSEOData]
-                                    .thumbnailDescription
-                                : ""}
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center">
-                          <span>Aspect Ratio: 16:9</span>
-                          <span>HD Preview ready</span>
-                        </div>
-                      </GlassCard>
+                            <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center">
+                              <span>Aspect Ratio: 16:9</span>
+                              <span>HD Preview ready</span>
+                            </div>
+                          </GlassCard>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            </main>
-          )}
+            </div>
+          </main>
         </div>
       </MainPage>
     </Protect>

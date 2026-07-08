@@ -2,7 +2,7 @@ import {
   ProjectModel,
   ContentModel,
 } from "#/database/mongoose/schema/index.model.js";
-import { getProjectById } from "./index.project.js";
+import { projectStatus } from "./index.project.js";
 // deleting from project collection
 async function deletFromProject(userID, projectID) {
   try {
@@ -45,17 +45,9 @@ async function deletFromProject(userID, projectID) {
 // deletting from content collection
 async function deletFromContent(userID, projectID) {
   try {
-    const result = await ContentModel.deleteOne({ userID, projectID });
+    const result = await ContentModel.deleteMany({ userID, projectID });
 
-    if (result.deletedCount === 0) {
-      return {
-        success: false,
-        statusCode: 404,
-        message: "Failed to delete project",
-      errorCode: "FAILED_TO_DELETE",
-        errors: null,
-      };
-    }
+    //console.log("result", result);
     return {
       success: true,
       statusCode: 200,
@@ -112,9 +104,11 @@ async function deleteProject(req, projectID) {
   try {
     const userID = req.session.userID;
     // getting project
-    const project = await getProjectById(req, projectID);
-  
-    if (!project.success) return project;
+    console.log(projectID);
+  //   const project = await projectStatus(req, projectID);
+  //  console.log("project", project);
+  //   if (!project.success) return project;
+   
     // deleting project,content,thumbnail
     const deleted = await Promise.allSettled([
       deletFromProject(userID, projectID),
@@ -130,8 +124,7 @@ async function deleteProject(req, projectID) {
     // if failed to delete from project collection
     if (!delProject.value.success) return delProject;
     // if failed to delete from content collection
-    if (project.data.contentStatus === "completed" && !delContent.value.success)
-      return delContent;
+    
     // if failed to delete from Tumbnail collection
     /*if (project.data.thumbnailStatus === "completed" && !delThumbnail.value.success)
       return delContent;*/

@@ -1,7 +1,7 @@
 import SubPage from "@/wrapper/subPage";
 import Protect from "@/wrapper/protect";
 import TextArea from "@/component/input/textArea.jsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import {
   Copy,
   Sparkles,
@@ -9,22 +9,23 @@ import {
   Tag,
   FileText,
   Share2,
-  ChevronRight,
-  CircleDollarSign,
+  MoreVertical,
+  Trash2,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
-import MainPageHeader from "@/component/header/mainPage.jsx";
 import GlassCard from "@/component/cards/glassCard";
 import { NeonButton2 } from "@/component/button/neonButton.jsx";
 import Button1 from "@/component/button/button1.jsx";
-import copyToClipboard from "@/utility/copyToClipboard.js"; 
+import copyToClipboard from "@/utility/copyToClipboard.js";
 import Toaster1 from "@/component/toaster/toaster1.jsx";
 import generateSEOData from "@/features/generate/seoData.generate.js";
-import { useContext } from "react";
 import projectStatusContext from "@/context/projectStatus.js";
 import projectContext from "@/context/project.js";
 import getProjectByID from "@/features/project/get.project.js";
-import SEODataChooser from "@/component/utility/seoDataChooser.jsx"
+import deleteProject from "@/features/project/delete.project.js";
+import SEODataChooser from "@/component/utility/seoDataChooser.jsx";
+import ProjectNotFound from "@/component/notFound/ProjectNotFound.jsx";
+import SeoDataSkeleton from "@/component/loader/seoDataSkeleton.jsx";
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
@@ -51,220 +52,323 @@ export const SkeletonLoader = () => {
   );
 };
 
-// ==========================================
 // MAIN APP COMPONENT
 // ==========================================
 
 export default function App() {
-  const { projectStatus } = useContext(projectStatusContext);
+  const { projectStatus, setprojectStatus } = useContext(projectStatusContext);
   //const { project, setProject } = UseProject();
   const [toasterData, setToasterData] = useState([]);
   const [videoDesc, setVideoDesc] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const popupRef = useRef(null);
+  const buttonRef = useRef(null);
   const { projectID } = useParams();
   // Skeleton Loading Simulator State
-  const [isLoading] = useState(false);
-  const [seoButtonDisable, setSeoButtonDisable] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [projectNotFound, setProjectNotFound] = useState(false);
   const { projectData, setProjectData } = useContext(projectContext);
-  const [currentProjectData, setCurrentProjectData] = useState();
-  const [activeSEOData, setActiveSEOData]= useState(0)
+  const [seoButtonDisable, setSeoButtonDisable] = useState(true);
+  const [currentProjectData, setCurrentProjectData] = useState(null);
 
-// gets project data
-  async function handleApp() {
-    const data = await getProjectByID(
-      { projectID: projectID },
-      { setProjectData },
+  const [activeSEOData, setActiveSEOData] = useState(0);
+
+  const resolvedVideoDesc =
+    videoDesc || currentProjectData?.videoDescription || "";
+  // activate and diactivate the generate seo button based on the length of the video description
+  useEffect(() => {
+    setSeoButtonDisable(resolvedVideoDesc.trim().length < 5);
+  }, [resolvedVideoDesc]);
+
+  const handleDeleteProject = () => {
+    setShowPopup(false);
+    deleteProject(
+      { projectID },
+      {
+        setProjectData,
+        setToasterData,
+        setprojectStatus,
+        projectStatus,
+        setProjectNotFound,
+      },
     );
-   
-
-  //  console.log(data);
-  }
+  };
   useEffect(() => {
-    document.title = "Dashboard | Media Room";
-    handleApp();
-  }, []);
-
-
-  //  handle toggle of button -- disable or enable
-  useEffect(() => {
-    if (videoDesc.trim().length < 5) {
-      setSeoButtonDisable(true);
-    } else {
-      setSeoButtonDisable(false);
-    }
-  }, [videoDesc]);
-
-  // sets current project
-  useEffect(() => {
-   
     const project = projectData.find((data) => data.projectID === projectID);
     if (project) {
       //console.log("useeffect", project);
+
       setCurrentProjectData({ ...project });
       setVideoDesc(
         project.videoDescription ? project.videoDescription : videoDesc,
       );
-       setSeoButtonDisable(true);
+      setSeoButtonDisable(true);
+      // setProjectNotFound(false);
+      setIsLoading(false);
+    } else {
+      setCurrentProjectData(null);
     }
-   
-  }, [projectData]);
+  }, [projectData, projectID]);
 
+  useEffect(() => {
+    if (!showPopup) return;
 
-  // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
-  const renderInlineStatusBadge = (status, label) => {
-    const colorMap = {
-      ready: "bg-emerald-500 shadow-[0_0_8px_#10b981]",
-      draft: "bg-amber-500 shadow-[0_0_8px_#f59e0b]",
-      pending: "bg-rose-500 shadow-[0_0_8px_#f43f5e]",
+    const handleClickOutside = (event) => {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
+        setShowPopup(false);
+      }
     };
 
-    const dotColor = colorMap[status] || colorMap["pending"];
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showPopup]);
 
+  useEffect(() => {
+    document.title = "Dashboard | Media Room";
+    const exists = projectStatus.find((data) => data.projectID === projectID);
+    setIsLoading(true);
+    // console.log("exits", exists);
+    //  console.log("res", res, exists);
+
+    if (!exists) {
+      const timer = setTimeout(() => {
+        const exists = projectStatus.find(
+          (data) => data.projectID === projectID,
+        );
+       // console.log("timeout exists", exists);
+        if (!exists) {
+          setProjectNotFound(true);
+        } else {
+          setProjectNotFound(false);
+        }
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setProjectNotFound(false);
+    }
+    const fetchProject = async () => {
+      
+      // if(projectData.find((data) => data.projectID === projectID)){
+      //    setIsLoading(false);
+      // }
+      await getProjectByID({ projectID: projectID }, { setProjectData });
+
+      setIsLoading(false);
+    };
+
+    fetchProject();
+  }, [projectID, projectStatus, setProjectData]);
+
+  // gets project data
+  // async function handleApp() {
+  //   const data = await getProjectByID(
+  //     { projectID: projectID },
+  //     { setProjectData, projectData },
+  //   );
+
+  //    console.log(data);
+  // }
+  // useEffect(() => {
+  //   document.title = "Dashboard | Media Room";
+  //   handleApp();
+  // }, []);
+
+  if (projectNotFound) {
     return (
-      <div className="flex-1 flex items-center justify-center gap-2 bg-slate-950/60 border border-slate-800/80 px-3 py-2 rounded-xl text-[10px] font-bold text-slate-400 tracking-wider transition-all duration-300 hover:border-slate-700/80">
-        <span className={`inline-block w-2 h-2 rounded-full ${dotColor}`} />
-        <span className="uppercase text-[9px]">{label}</span>
-      </div>
+      <Protect>
+        <SubPage>
+          <ProjectNotFound />
+        </SubPage>
+      </Protect>
     );
-  };
+  }
 
+  // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
   return (
     <Protect>
       <SubPage>
         <Toaster1 data={toasterData} />
         <div>
           {/* MAIN CONTENT AREA */}
-          {isLoading ? (
-            <SkeletonLoading />
-          ) : (
-            <main className="flex-1 px-8  py-6 mb-20 md:py-8  mx-auto w-full space-y-6 ">
-              {/* TOP DASHBOARD CONTROL PANEL */}
-              <MainPageHeader
-                title="Project"
-                description="Select and manage your metadata blueprints for YouTube
-          content creation"
-              />{" "}
-              {/* project name */}
-              <div className="flex items-center pl-0.5 mb-10">
-                {/* Glowing sky-blue vertical indicator bar on title */}
-                <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3 " />
-                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
-                  {
-                    projectStatus.find((p) => p.projectID === projectID)
-                      ?.projectName
-                  }
-                </h3>
+
+          <main className="flex-1 px-8  py-6 mb-20 md:py-8  mx-auto w-full space-y-6 ">
+            {/* TOP DASHBOARD CONTROL PANEL */}
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900/65 pb-6">
+              <div>
+                <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                  Project
+                </h1>
+                <p className="text-xs text-slate-400 mt-1">
+                  your project details
+                </p>
               </div>
-              <div className="space-y-8 animate-fade-in">
-                {/* LAST PROJECT */}
-                <div className="space-y-4">
-                  {/* <div className="flex items-center pl-0.5">
+
+              <div className="relative flex items-center gap-2.5">
+                <div ref={buttonRef}>
+                  <NeonButton2
+                    variant="secondary"
+                    icon={MoreVertical}
+                    className="text-xs"
+                    onClick={() => setShowPopup((prev) => !prev)}
+                  ></NeonButton2>
+                </div>
+
+                <div
+                  className={`absolute right-0 top-full z-20 mt-3 w-[220px] sm:w-[260px] transition-all duration-300 ease-out ${showPopup ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
+                >
+                  <div ref={popupRef}>
+                    <GlassCard
+                      hoverEffect={false}
+                      className="p-4 bg-slate-950/95 border-slate-800/90 shadow-[0_0_40px_rgba(15,23,42,0.65)]"
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="text-[11px] uppercase tracking-[0.35em] text-slate-500"></div>
+                        <Button1
+                          onClick={handleDeleteProject}
+                          variant="outline"
+                          className="w-full justify-between rounded-xl border border-rose-400 bg-rose-600/10 text-rose-200 text-xs font-medium tracking-wide uppercase hover:bg-rose-600/20 hover:text-white"
+                        >
+                          <span className="text-xs">Delete project</span>
+                          <Trash2 className="w-4 h-4 text-rose-400" />
+                        </Button1>
+                      </div>
+                    </GlassCard>
+                  </div>
+                </div>
+              </div>
+            </header>
+            {/* project name */}
+            <div className="flex items-center pl-0.5 mb-10">
+              {/* Glowing sky-blue vertical indicator bar on title */}
+              <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3 " />
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
+                {
+                  projectStatus.find((p) => p.projectID === projectID)
+                    ?.projectName
+                }
+              </h3>
+            </div>
+            <div className="space-y-8 animate-fade-in">
+              {/* LAST PROJECT */}
+              <div className="space-y-4">
+                {/* <div className="flex items-center pl-0.5">
                     <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
                     <h3 className="text-xs font-bold uppercase tracking-widest text-sky-400">
                       hello
                     </h3>
                   </div> */}
-                  <div className="grid lg:grid-cols-2  w-full gap-6">
-                    <TextArea
-                      label="Video Description"
-                      icon="Icon"
-                      type="text"
-                      placeholder="describe your video"
-                      id="video desc"
-                      autoComplete="video description"
-                      state={videoDesc}
-                      setState={setVideoDesc}
-                      value={videoDesc}
-                      onChange={(e) => {
-                        setVideoDesc(
-                          e.target.currentValue
-                            ? e.target.currentValue
-                            : videoDesc,
-                        );
-                      }}
-                    />
-                    <TextArea
-                      label="Custom Thumbnail Prompt (optional)"
-                      icon="Icon"
-                      type="text"
-                      placeholder="add custom thumbanil prompt"
-                      id="video desc"
-                      autoComplete="video description"
-                      state={customPrompt}
-                      setState={setCustomPrompt}
-                      value={customPrompt}
-                      onChange={(e) => {
-                        setVideoDesc(
-                          e.target.currentValue
-                            ? e.target.currentValue
-                            : videoDesc,
-                        );
-                      }}
-                    />
-                  </div>
-                  <div className="grid lg:grid-cols-2  w-full  gap-10 my-5 ">
-                    <Button1
-                      className=" w-full lg:w-[80%] mx-auto flex gap-20 "
-                      disabled={seoButtonDisable}
-                      variant="secondary"
-                      //   disabled={true}
-                      onClick={() => {
-                        generateSEOData(
-                          { projectID, videoDescription: videoDesc },
-                          {
-                            currentProjectData,
-                            setToasterData,
-                            setProjectData,
-                            setSeoButtonDisable,
-                            setActiveSEOData,
-                          },
-                        );
-                      }}
-                    >
-                      <div> Generate SEO Data </div>
-                      <div>
-                        <p>( 5 credit )</p>
-                      </div>
-                    </Button1>
-                    <Button1
-                      className="w-full lg:w-[80%] mx-auto flex gap-20 "
-                      variant="primary"
-                      //   disabled={true}
-                    >
-                      <div> Generate Thumbnail</div>
-                      <div>
-                        <p>( 20 credit )</p>
-                      </div>
-                    </Button1>
-                  </div>
-                  <div className="grid  lg:grid-cols-4 gap-6 mt-30">
-                    {/* METADATA EXPORT COLUMN */}
-                    <div className="lg:col-span-2 space-y-6">
-                      <GlassCard
-                        hoverEffect={false}
-                        className="h-full flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-                      >
-                        <div>
-                          {/* Workspace heading */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
-                            <div>
-                              <h2 className="text-2xl font-black text-white tracking-tight">
-                                {/* {selectedProject.name} */}
-                              </h2>
-                            </div>
+                <div className="grid lg:grid-cols-2  w-full gap-6">
+                  <TextArea
+                    label="Video Description"
+                    icon="Icon"
+                    type="text"
+                    placeholder="describe your video"
+                    id="video desc"
+                    autoComplete="video description"
+                    state={videoDesc}
+                    setState={setVideoDesc}
+                    value={videoDesc}
+                    onChange={(e) => {
+                      setVideoDesc(
+                        e.target.currentValue
+                          ? e.target.currentValue
+                          : videoDesc,
+                      );
+                    }}
+                  />
+                  <TextArea
+                    label="Custom Thumbnail Prompt (optional)"
+                    icon="Icon"
+                    type="text"
+                    placeholder="add custom thumbanil prompt"
+                    id="video desc"
+                    autoComplete="video description"
+                    state={customPrompt}
+                    setState={setCustomPrompt}
+                    value={customPrompt}
+                    onChange={(e) => {
+                      setVideoDesc(
+                        e.target.currentValue
+                          ? e.target.currentValue
+                          : videoDesc,
+                      );
+                    }}
+                  />
+                </div>
+                <div className="grid lg:grid-cols-2  w-full  gap-10 my-5 ">
+                  <Button1
+                    className=" w-full lg:w-[80%] mx-auto flex gap-20 "
+                    disabled={seoButtonDisable}
+                    variant="secondary"
+                    //   disabled={true}
+                    onClick={() => {
+                      generateSEOData(
+                        { projectID, videoDescription: videoDesc },
+                        {
+                          currentProjectData,
+                          setToasterData,
+                          setProjectData,
+                          setSeoButtonDisable,
+                          setActiveSEOData,
+                        },
+                      );
+                    }}
+                  >
+                    <div> Generate SEO Data </div>
+                    <div>
+                      <p>( 5 credit )</p>
+                    </div>
+                  </Button1>
+                  <Button1
+                    className="w-full lg:w-[80%] mx-auto flex gap-20 "
+                    variant="primary"
+                    //   disabled={true}
+                  >
+                    <div> Generate Thumbnail</div>
+                    <div>
+                      <p>( 20 credit )</p>
+                    </div>
+                  </Button1>
+                </div>
+                <div className="mt-30">
+                  {isLoading ? (
+                    <SeoDataSkeleton />
+                  ) : (
+                    <div className="grid  lg:grid-cols-4 gap-6 ">
+                      {/* METADATA EXPORT COLUMN */}
+                      <div className="lg:col-span-2 space-y-6">
+                        <GlassCard
+                          hoverEffect={false}
+                          className="h-full flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                        >
+                          <div>
+                            {/* Workspace heading */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-900 pb-5 mb-6">
+                              <div>
+                                <h2 className="text-2xl font-black text-white tracking-tight">
+                                  {/* {selectedProject.name} */}
+                                </h2>
+                              </div>
 
-                            <div className="flex items-center gap-2 w-full justify-between">
-                              <NeonButton2
-                                onClick={() =>
-                                  copyToClipboard("hello", "metadata file")
-                                }
-                                variant="secondary"
-                                icon={Share2}
-                                className="lg:text-md text-xs lg:px-3.5 lg:py-2 px-1 py-1"
-                              >
-                                Export JSON
-                              </NeonButton2>
-                              {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                              <div className="flex items-center gap-2 w-full justify-between">
+                                <NeonButton2
+                                  onClick={() =>
+                                    copyToClipboard("hello", "metadata file")
+                                  }
+                                  variant="secondary"
+                                  icon={Share2}
+                                  className="lg:text-md text-xs lg:px-3.5 lg:py-2 px-1 py-1"
+                                >
+                                  Export JSON
+                                </NeonButton2>
+                                {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
                                 <p className="text-white/80 inline-block ">
                                   status :
                                 </p>
@@ -272,164 +376,170 @@ export default function App() {
                                   generating...
                                 </p>
                               </div> */}
+                              </div>
                             </div>
-                          </div>
-                          {/* METADATA FIELDS */}
-                          <div className="space-y-5">
-                            {/* TITLE CONTAINER */}
-                            <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-2.5">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-                                  Optimized Title
-                                </span>
-                                {/* {console.log("line 275", currentProjectData)} */}
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            currentProjectData.seoData.length -
-                                              1
-                                          ].title
-                                        : "",
-                                      "Title",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Title"
-                                >
-                                  {/* {currentProjectData?.seoData[currentProjectData.seoData.length-1]
+                            {/* METADATA FIELDS */}
+                            <div className="space-y-5">
+                              {/* TITLE CONTAINER */}
+                              <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                <div className="flex items-center justify-between mb-2.5">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                                    Optimized Title
+                                  </span>
+                                  {/* {console.log("line 275", currentProjectData)} */}
+                                  <button
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        currentProjectData?.seoData[
+                                          activeSEOData
+                                        ]
+                                          ? currentProjectData.seoData[
+                                              currentProjectData.seoData
+                                                .length - 1
+                                            ].title
+                                          : "",
+                                        "Title",
+                                      )
+                                    }
+                                    className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                    title="Copy Title"
+                                  >
+                                    {/* {currentProjectData?.seoData[currentProjectData.seoData.length-1]
                                     ? currentProjectData.seoData[currentProjectData.seoData.length-1].title
                                     : ""} */}
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
+                                    <Copy className="w-3 h-3" />
+                                    Copy
+                                  </button>
+                                </div>
+                                <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
+                                  {currentProjectData?.seoData[activeSEOData]
+                                    ? currentProjectData.seoData[activeSEOData]
+                                        .title
+                                    : ""}
+                                </p>
                               </div>
-                              <p className="text-sm font-semibold text-slate-100 leading-relaxed pr-6 select-all">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[activeSEOData]
-                                      .title
-                                  : ""}
-                              </p>
+
+                              {/* DESCRIPTION CONTAINER */}
+                              <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                <div className="flex items-center justify-between mb-2.5">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-sky-400" />
+                                    AI Generated Video Description
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        currentProjectData?.seoData[
+                                          activeSEOData
+                                        ]
+                                          ? currentProjectData.seoData[
+                                              currentProjectData.seoData
+                                                .length - 1
+                                            ].description
+                                          : "",
+                                        "Description",
+                                      )
+                                    }
+                                    className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                    title="Copy Description"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                    Copy
+                                  </button>
+                                </div>
+                                <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
+                                  {currentProjectData?.seoData[activeSEOData]
+                                    ? currentProjectData.seoData[activeSEOData]
+                                        .description
+                                    : ""}
+                                </p>
+                              </div>
+
+                              {/* SEO TAGS */}
+                              <div className="relative bg-slate-950/50 border  border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                    <Tag className="w-3.5 h-3.5 text-sky-400" />
+                                    SEO Keyword Tags
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        currentProjectData?.seoData[
+                                          activeSEOData
+                                        ]
+                                          ? currentProjectData.seoData[
+                                              currentProjectData.seoData
+                                                .length - 1
+                                            ].tags.join(",")
+                                          : "",
+                                        "SEO Tags",
+                                      )
+                                    }
+                                    className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                    title="Copy Tags"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                    Copy
+                                  </button>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 pr-6">
+                                  {currentProjectData?.seoData[activeSEOData]
+                                    ? currentProjectData.seoData[
+                                        activeSEOData
+                                      ].tags
+                                        .join(",")
+                                        .split(",")
+                                        .map((tag, idx) => (
+                                          <span
+                                            key={idx}
+                                            className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
+                                          >
+                                            #{tag.trim()}
+                                          </span>
+                                        ))
+                                    : ""}
+                                </div>
+                              </div>
                             </div>
 
-                            {/* DESCRIPTION CONTAINER */}
-                            <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-2.5">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                  <FileText className="w-3.5 h-3.5 text-sky-400" />
-                                  AI Generated Video Description
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            currentProjectData.seoData.length -
-                                              1
-                                          ].description
-                                        : "",
-                                      "Description",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Description"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
-                              </div>
-                              <p className="text-xs text-slate-350 leading-relaxed whitespace-pre-wrap pr-6 select-all">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[activeSEOData]
-                                      .description
-                                  : ""}
-                              </p>
-                            </div>
-
-                            {/* SEO TAGS */}
-                            <div className="relative bg-slate-950/50 border  border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-3">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                  <Tag className="w-3.5 h-3.5 text-sky-400" />
-                                  SEO Keyword Tags
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            currentProjectData.seoData.length -
-                                              1
-                                          ].tags.join(",")
-                                        : "",
-                                      "SEO Tags",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Tags"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
-                              </div>
-                              <div className="flex flex-wrap gap-1.5 pr-6">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[
-                                      activeSEOData
-                                    ].tags
-                                      .join(",")
-                                      .split(",")
-                                      .map((tag, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/15 px-3 py-1 rounded-lg"
-                                        >
-                                          #{tag.trim()}
-                                        </span>
-                                      ))
-                                  : ""}
-                              </div>
-                            </div>
+                            <SEODataChooser
+                              items={currentProjectData?.seoData}
+                              activeIndex={activeSEOData}
+                              onChange={setActiveSEOData}
+                            />
                           </div>
-                        
-                          <SEODataChooser
-                            items={currentProjectData?.seoData}
-                            activeIndex={activeSEOData}
-                            onChange={setActiveSEOData}
-                          />
-                        </div>
 
-                        <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
-                          {/* <span>Created {selectedProject.date}</span> */}
-                        </div>
-                      </GlassCard>
-                    </div>
+                          <div className="mt-6 pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex items-center justify-between">
+                            {/* <span>Created {selectedProject.date}</span> */}
+                          </div>
+                        </GlassCard>
+                      </div>
 
-                    {/* VISUAL ASSET PREVIEW COLUMN */}
-                    <div className="lg:col-span-2">
-                      <GlassCard
-                        hoverEffect={false}
-                        className="space-y-5 flex flex-col justify-between h-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-                      >
-                        <div className="space-y-5">
-                          <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
-                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                              <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                              Thumbnail Preview
-                            </span>
-                            {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
+                      {/* VISUAL ASSET PREVIEW COLUMN */}
+                      <div className="lg:col-span-2">
+                        <GlassCard
+                          hoverEffect={false}
+                          className="space-y-5 flex flex-col justify-between h-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                        >
+                          <div className="space-y-5">
+                            <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
+                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
+                                Thumbnail Preview
+                              </span>
+                              {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
                               <p className="text-white/80">status :</p>
                               <p className="text-white/50 tracking-wider">
                                 generating...
                               </p>
                             </div> */}
-                          </div>
+                            </div>
 
-                          {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
-                          <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl">
-                            {/* {selectedProject.thumbnail ? (
+                            {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
+                            <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl">
+                              {/* {selectedProject.thumbnail ? (
                               <>
                                 <img
                                   src={selectedProject.thumbnail}
@@ -452,52 +562,53 @@ export default function App() {
                                 </p>
                               </div>
                             )} */}
-                          </div>
-
-                          {/* PROMPT SCRIPT PROJECTION */}
-                          <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                            <div className="flex items-center justify-between mb-2.5">
-                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                                AI Thumbnail Prompt
-                              </span>
-                              <button
-                                onClick={() =>
-                                  copyToClipboard(
-                                    currentProjectData?.seoData[activeSEOData]
-                                      ? currentProjectData.seoData[
-                                          activeSEOData
-                                        ].thumbnailDescription
-                                      : "",
-                                    "Thumbnail Prompt",
-                                  )
-                                }
-                                className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                title="Copy Prompt"
-                              >
-                                <Copy className="w-3 h-3" />
-                                Copy
-                              </button>
                             </div>
-                            <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
-                              {currentProjectData?.seoData[activeSEOData]
-                                ? currentProjectData.seoData[activeSEOData]
-                                    .thumbnailDescription
-                                : "not available"}
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center">
-                          <span>Aspect Ratio: 16:9</span>
-                          <span>HD Preview ready</span>
-                        </div>
-                      </GlassCard>
+                            {/* PROMPT SCRIPT PROJECTION */}
+                            <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                              <div className="flex items-center justify-between mb-2.5">
+                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                                  AI Thumbnail Prompt
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    copyToClipboard(
+                                      currentProjectData?.seoData[activeSEOData]
+                                        ? currentProjectData.seoData[
+                                            activeSEOData
+                                          ].thumbnailDescription
+                                        : "",
+                                      "Thumbnail Prompt",
+                                    )
+                                  }
+                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
+                                  title="Copy Prompt"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                  Copy
+                                </button>
+                              </div>
+                              <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
+                                {currentProjectData?.seoData[activeSEOData]
+                                  ? currentProjectData.seoData[activeSEOData]
+                                      .thumbnailDescription
+                                  : "not available"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center">
+                            <span>Aspect Ratio: 16:9</span>
+                            <span>HD Preview ready</span>
+                          </div>
+                        </GlassCard>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            </main>
-          )}
+            </div>
+          </main>
         </div>
       </SubPage>
     </Protect>

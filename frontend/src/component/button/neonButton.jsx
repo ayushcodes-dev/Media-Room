@@ -5,8 +5,12 @@ const NeonButton = ({
   onClick,
   variant = "primary",
   className = "",
+  disabled = false,
 }) => {
-  const styles = {
+  const baseStyle =
+    "w-full py-3.5 px-6 rounded-2xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-3 font-inter";
+
+  const variants = {
     primary:
       "bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_25px_rgba(14,165,233,0.3)]",
     outline:
@@ -18,7 +22,8 @@ const NeonButton = ({
   return (
     <button
       onClick={onClick}
-      className={`w-full py-3.5 px-6 rounded-2xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-3 font-inter ${styles[variant]} ${className}`}
+      disabled={disabled}
+      className={`${baseStyle} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
     >
       {children}
     </button>
@@ -36,7 +41,7 @@ export const NeonButton2 = ({
   icon: Icon = null,
 }) => {
   const baseStyle =
-    "relative flex items-center justify-center gap-2 font-medium px-4 py-2 rounded-xl transition-all duration-300 select-none active:scale-95";
+    "relative flex items-center justify-center gap-2 font-medium px-4 py-2 rounded-xl transition-all duration-300 select-none active:scale-95 ";
 
   const variants = {
     primary:

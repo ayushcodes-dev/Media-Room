@@ -48,6 +48,24 @@ export const getProjectByID_API = async ({ projectID }) => {
     };
   }
 };
+// delete project by id
+export const deleteProject_API = async ({ projectID }) => {
+  try {
+    const response = await api.delete("/project/" + projectID);
+    const data = response.data;
+    // console.log("api",data)
+    return data;
+  } catch (error) {
+    console.log("error.response", error.response);
+    return {
+      error: error.response.data || {
+        message: "An error occurred during deleting project data.",
+      },
+      success: false,
+    };
+  }
+};
+
 
 export const saveVideoDesc_API = async ({ projectID, description }) => {
   try {
@@ -56,7 +74,7 @@ export const saveVideoDesc_API = async ({ projectID, description }) => {
       { description },
     );
     const data = response.data;
-    console.log("saving desc", data);
+   // console.log("saving desc", data);
     return data;
   } catch (error) {
     console.log("error during sving video desc ", error.response);

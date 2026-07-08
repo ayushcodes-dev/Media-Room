@@ -39,7 +39,6 @@ const playBeep = (freq = 600, type = "sine", duration = 0.06) => {
  * @param {function} onChange - Callback function triggered when an item is selected. Receives the item ID.
  */
 function CircleChooser({ items = [], activeIndex, onChange }) {
-  
   const progressPercent =
     items.length > 1 ? (activeIndex / (items.length - 1)) * 100 : 0;
 
@@ -52,8 +51,6 @@ function CircleChooser({ items = [], activeIndex, onChange }) {
 
   return (
     <div className="w-full max-w-lg mx-auto backdrop-blur-xl borderrounded-2xl p-6 shadow-2xl relative overflow-x-auto">
-    
-
       {/* Circle Selector Stepper Track */}
       <div className="relative flex items-center justify-between py-4 px-2">
         {/* Track Line Backing */}
@@ -113,7 +110,7 @@ function CircleChooser({ items = [], activeIndex, onChange }) {
                     : "text-slate-600 group-hover:text-slate-500"
                 }`}
               >
-                SEO Data {idx+1}
+                SEO Data {idx + 1}
               </span>
             </button>
           );

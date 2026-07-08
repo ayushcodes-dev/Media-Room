@@ -1,5 +1,5 @@
 function handleStatus(req) {
-  console.log("cookies" , req.cookies);
+ // console.log("cookies" , req.cookies);
   const data = {
     isAuthenticated: req.session?req.session.isAuthenticated :false,
     userID:req.session?req.session.userID : null,
@@ -7,7 +7,7 @@ function handleStatus(req) {
     email: req.session?req.session.email : null,
     role: req.session?req.session.role : null,
   };
-  console.log("status data",req.session);
+  //console.log("status data",req.session);
 
   return {
     success: true,

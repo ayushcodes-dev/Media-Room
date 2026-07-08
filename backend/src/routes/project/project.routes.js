@@ -64,7 +64,7 @@ router.get("/project", async (req, res) => {
 router.get("/project/status", async (req, res) => {
   const status = await projectStatus(req);
   if (status.success) {
-    return res.success({ ...status });
+  return res.success({ ...status });
   } else {
     return res.error({ ...status });
   }
@@ -81,7 +81,7 @@ router.get("/project/:projectID", async (req, res) => {
   const project = await getProjectById(req, projectID);
 
   if (project.success) {
-    return res.success({ ...project });
+   return res.success({ ...project });
   } else {
     return res.error({ ...project });
   }
@@ -177,7 +177,7 @@ router.post(
 router.get("/project/:projectID/content", async (req, res) => {
   const projectID = req.params.projectID;
   const project = await getContent(req, projectID);
-  console.log("project:", project);
+  //console.log("project:", project);
   if (project.success) {
     return res.success({ ...project });
   } else {
