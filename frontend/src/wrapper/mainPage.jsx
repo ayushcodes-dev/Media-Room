@@ -1,13 +1,15 @@
 import Header3 from "@/component/header/header3";
 import Navbar2 from "@/component/navbar/navbar2";
 import { useState } from "react";
+import StarBackground from "@/component/background/starBackground";
 
 function MainPage({ children }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className=" min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden no-scrollbar">
+    <div className="relative isolate min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden no-scrollbar">
+      <StarBackground />
       {/* 1. Global Header */}
       <div className="relative ">
         <Header3

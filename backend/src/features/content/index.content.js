@@ -159,7 +159,7 @@ async function mygeminiservice(prompt) {
 
 async function AI_Bazzar_Gemini_service(prompt) {
   try {
-    const res = await fetch("https://ai-bazaar-dhvh.onrender.com/api/gemini", {
+    const res = await fetch("https://ai-bazaar-seven.vercel.app/api/gemini", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
