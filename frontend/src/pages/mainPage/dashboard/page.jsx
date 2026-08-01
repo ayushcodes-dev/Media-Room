@@ -90,9 +90,10 @@ export default function App() {
     });
 
     if (res && res.length > 0) {
-    
       //const data = await getProjectByID({ projectID: res[0].projectID }, { setProject });
-    } 
+    } else {
+      setIsLoading(false);
+    }
   }
   useEffect(() => {
     document.title = "Dashboard | Media Room";
@@ -101,24 +102,33 @@ export default function App() {
   // sets current project
   useEffect(() => {
     if (projectData[0]) {
-      setCurrentProjectData({ ...projectData[0] });
+        const filterproject = projectStatus.filter((p) => {
+          return p.contentStatus === "completed";
+        });
+        const currentId= filterproject[filterproject.length - 1]?.projectID;
+        const project = projectData.find(
+          (p) => p.projectID === currentId,
+        )
+      setCurrentProjectData({ ...project });
     }
   }, [projectData]);
   useEffect(() => {
     async function fetchProjectData() {
-    
       if (projectStatus && projectStatus.length > 0) {
+        const project= projectStatus.filter((p)=>{
+          return p.contentStatus === "completed";
+        })
         const data = await getProjectByID(
-          { projectID: projectStatus[0].projectID },
+          { projectID: project[project.length - 1]?.projectID },
           { setProjectData },
         );
-       
-        //  console.log("project data", data);
+       // console.log("project data", projectStatus);
+console.log("project ", project[project.length - 1]);
         setIsLoading(false);
       }
     }
     fetchProjectData();
-  }, [projectStatus]);
+  }, [projectStatus, setProjectData]);
 
   // Inline status badge designed to perfectly mimic the content/thumbnail capsule controls in the screenshot
   const renderInlineStatusBadge = (status, label) => {

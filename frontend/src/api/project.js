@@ -6,7 +6,7 @@ export const projectStatusAPI = async () => {
     const data = response.data;
     return data;
   } catch (error) {
-    console.log(error.response);
+  //  console.log(error.response);
     return {
       error: error.response.data || {
         message: "An error occurred during getting project status.",
@@ -22,7 +22,7 @@ export const createProjectAPI = async ({ projectName }) => {
     const data = response.data;
     return data;
   } catch (error) {
-    console.log(error.response);
+   // console.log(error.response);
     return {
       error: error.response.data || {
         message: "An error occurred during creating project",
@@ -39,7 +39,7 @@ export const getProjectByID_API = async ({ projectID }) => {
     // console.log("api",data)
     return data;
   } catch (error) {
-    console.log(error.response);
+    //console.log(error.response);
     return {
       error: error.response.data || {
         message: "An error occurred during getting project data.",
