@@ -4,6 +4,7 @@ import LandingPage from "./pages/landing/page.jsx";
 import Auth from "./pages/auth/page.jsx";
 import Dashboard from "./pages/mainPage/dashboard/page.jsx";
 import ProjectsHome from "./pages/mainPage/projects/page.jsx";
+import Billing from "./pages/mainPage/billing/page.jsx";
 import ProjectDataPage from "./pages/subpages/project/projectID/page.jsx";
 import OAuth from "./pages/auth/OAuth.jsx";
 import {useEffect} from "react"
@@ -20,6 +21,7 @@ useEffect(()=>{
         <Route path="/auth/:action" element={<Auth />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/projects" element={<ProjectsHome />} />
+        <Route path="/billing" element={<Billing />} />
         <Route path="/projects/:projectID" element={<ProjectDataPage />} />
         <Route path="/oAuth/callback/:provider" element={<OAuth />} />
       </Routes>
