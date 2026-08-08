@@ -18,8 +18,17 @@ import NeonButton, { NeonButton2 } from "@/component/button/neonButton.jsx";
  * @param {Object} props.plan - Currently selected plan details
  * @param {Function} props.onClose - Callback to close the modal
  * @param {Function} props.onConfirm - Callback when user confirms payment
+ * @param {Function} [props.onSimulateSuccess] - Callback to simulate success page directly
+ * @param {Function} [props.onSimulateFailure] - Callback to simulate failure page directly
  */
-const PaymentConfirmationModal = ({ isOpen, plan, onClose, onConfirm }) => {
+const PaymentConfirmationModal = ({
+  isOpen,
+  plan,
+  onClose,
+  onConfirm,
+  onSimulateSuccess,
+  onSimulateFailure,
+}) => {
   if (!isOpen || !plan) return null;
 
   return (
@@ -161,8 +170,10 @@ const PaymentConfirmationModal = ({ isOpen, plan, onClose, onConfirm }) => {
             </NeonButton>
           </div>
 
+        
+
           {/* Secure Payment Footer */}
-          <div className="mt-4 pt-3 border-t border-slate-900 text-center flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-medium">
+          <div className="mt-3 pt-2 text-center flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             <span>256-Bit Encrypted Secure Checkout</span>
           </div>

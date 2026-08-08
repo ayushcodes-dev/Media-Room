@@ -2,6 +2,8 @@
   "dependencies": {
     "@ai-sdk/xai": "^3.0.83",
     "ai": "^6.0.168",
+    "crypto": "^1.0.1",
+    "razorpay": "^2.9.8",
     "zod": "^4.3.6"
   }
 }

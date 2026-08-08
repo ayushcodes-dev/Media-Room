@@ -6,13 +6,16 @@ const billingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    activePlan: {
+      type: String,
+    },
     plans: [
       {
-        planName: {
+        planID: {
           type: String,
           required: true,
         },
-        planID: {
+        orderID:{
           type: String,
           required: true,
         },
@@ -20,23 +23,35 @@ const billingSchema = new mongoose.Schema(
           type: Number,
           required: true,
         },
+        credits: {
+          type: Number,
+          required: true,
+        },
+        dailyLimit:{
+            type: Number,
+          required: true,
+        },
         status: {
           type: String,
           required: true,
-          enum: ["active" , "inactive", "expired", "cancelled"],
+          enum: ["purchased","inactive","active"],
         },
-        seoDataPrice:{
-            type: Number,
-            required: true,
+        seoDataCredit: {
+          type: Number,
+          required: true,
         },
-        thumbnailPrice:{
-            type: Number,
-            required: true,
+        thumbnailCredit: {
+          type: Number,
+          required: true,
         },
-        purchaseDate:{
-            type: Date,
-            required: true,
-        }
+        purchaseDate: {
+          type: Date,
+          required: true,
+        },
+        expirydate: {
+          type: Date,
+          required: true,
+        },
       },
     ],
   },

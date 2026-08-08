@@ -6,7 +6,7 @@ export const projectStatusAPI = async () => {
     const data = response.data;
     return data;
   } catch (error) {
-  //  console.log(error.response);
+   // console.log(error);
     return {
       error: error.response.data || {
         message: "An error occurred during getting project status.",

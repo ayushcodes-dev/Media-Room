@@ -3,6 +3,7 @@ import generateRouter from "./generate/generate.routes.js";
 import authRouter from "./auth/auth.routes.js";
 import projectRouter  from "./project/project.routes.js";
 import oAuthRouter from "./oAuth/oAuth.routes.js";
+import billingRouter from "./billing/billing.routes.js"
 // router
 const router = express.Router();
 
@@ -30,6 +31,13 @@ router.use(generateRouter);
  * @route /project/*
  */
 router.use(projectRouter);
+
+/**
+ * @desc Mount billing routes
+ * Any request coming to this router will be forwarded to billingRouter
+ * @route /billing/*
+ */
+router.use(billingRouter);
 
 /**
  * @route   GET /

@@ -1,27 +1,64 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import MainPage from "@/wrapper/mainPage";
 import Protect from "@/wrapper/protect";
 import MainPageHeader from "@/component/header/mainPage.jsx";
-import GlassCard from "@/component/cards/glassCard.jsx";
+
 import BillingCard from "@/component/cards/billingCard.jsx";
 import PaymentConfirmationModal from "@/component/cards/paymentConfirmationModal.jsx";
 import Toaster1 from "@/component/toaster/toaster1.jsx";
-import { Zap, CreditCard, Sparkles, CheckCircle2, Shield, HelpCircle } from "lucide-react";
+import createOrder from "@/features/billing/createOrder.js";
+import verifyPayment from "@/features/billing/verifyPayment.js";
+import PaymentProcessingComponent from "./processing.jsx";
+import PaymentSuccessComponent from "./success.jsx";
+import PaymentFailedComponent from "./failed.jsx";
+import SubscriptionHistoryCard from "./historyCard.jsx";
+import SubscriptionHistoryModal from "./historyModal.jsx";
+import getPaymentHistory from "@/features/billing/getHistory.js"
+import updatePlanStatus from "@/features/billing/updatePlanStatus.js";
+
+import {
+  CheckCircle2,
+  Shield,
+  HelpCircle,
+} from "lucide-react";
+import { useAsyncValue } from "react-router-dom";
 
 /**
  * Billing Page Component (MainPage Billing Section)
- * 
+ *
  * Main billing and subscription management workspace for Media Room / Tubenix.
- * Displays user's current credit balance, credit breakdown, 4 tiered subscription plans,
- * and a bottom slide-up payment confirmation popup card.
+ * Displays subscription history card (thin rows, status, expired/active, see all modal),
+ * available credit balance, credit breakdown, 4 tiered subscription plans,
+ * and renders Payment Success / Payment Failure components in-page without separate routes.
  */
 export default function BillingPage() {
   const [toasterData, setToasterData] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  // In-page payment state view: 'idle' | 'processing' | 'success' | 'failed'
+  const [paymentStatus, setPaymentStatus] = useState("idle");
+  const [processingStep, setProcessingStep] = useState("Initializing secure payment session...");
+  const [processingStepIndex, setProcessingStepIndex] = useState(1);
+  const [paymentDetails, setPaymentDetails] = useState({
+    plan: null,
+    paymentId: "",
+    orderId: "",
+    amount: 0,
+    credits: 0,
+    error: "",
+    code: "",
+  });
+
+  // Subscription History State (Initial sample history conforming to history format)
+  const [billingHistory, setBillingHistory] = useState([
+   
+  ]);
 
   useEffect(() => {
     document.title = "Billing & Plans | Media Room";
+    getPaymentHistory({ setPaymentHistory: setBillingHistory });
   }, []);
 
   /**
@@ -33,29 +70,153 @@ export default function BillingPage() {
   };
 
   /**
-   * Finalize Payment Confirmation
-   * Adds success toast notification and closes the bottom popup card
+   * Show Payment Success Component in-page and append to History
    */
-  const handleConfirmPayment = (plan) => {
+  const handleShowSuccess = (plan, paymentId, orderId) => {
     setIsPaymentModalOpen(false);
-    setToasterData((prev) => [
-      ...prev,
-      {
-        id: `confirm_${Date.now()}`,
-        status: "success",
-        info: `Payment Successful! Subscribed to ${plan.title} (₹${plan.price}) with ${plan.credits.toLocaleString("en-IN")} Credits.`,
-        align: "top-right",
-        duration: 5000,
-      },
-    ]);
+
+    const generatedPaymentId =
+      paymentId || `pay_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+    const generatedOrderId =
+      orderId || `order_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+
+    setPaymentDetails({
+      plan: plan,
+      paymentId: generatedPaymentId,
+      orderId: generatedOrderId,
+      amount: plan?.price || 599,
+      credits: plan?.credits || 1500,
+    });
+    setPaymentStatus("success");
+
+    // Add new purchase to History matching the backend format
+    if (plan) {
+      const now = new Date();
+      const expiry = new Date();
+      expiry.setMonth(expiry.getMonth() + 2);
+
+      const newHistoryItem = {
+        _id: `hist_${Date.now()}`,
+        planID: plan.id,
+        planTitle: plan.title,
+        price: plan.price,
+        credits: plan.credits,
+        dailyLimit: plan.dailyLimit || 100,
+        seoDataCredit: 5,
+        thumbnailCredit: 20,
+        purchaseDate: now.toISOString(),
+        expirydate: expiry.toISOString(),
+        orderID: generatedOrderId,
+        status: "purchased",
+      };
+
+      setBillingHistory((prevHistory) => [
+        newHistoryItem,
+        ...prevHistory.map((item) => ({ ...item, status: "expired" })),
+      ]);
+    }
+  };
+
+  /**
+   * Show Payment Failure Component in-page
+   */
+  const handleShowFailed = (plan, errorMessage, errorCode) => {
+    setIsPaymentModalOpen(false);
+    setPaymentDetails({
+      plan: plan,
+      error: errorMessage || "The payment process was unsuccessful or cancelled.",
+      code: errorCode || "PAYMENT_FAILED",
+      amount: plan?.price || 599,
+    });
+    setPaymentStatus("failed");
+  };
+
+  /**
+   * Finalize Payment Confirmation with Razorpay
+   */
+  const handleConfirmPayment = async (plan) => {
+    const targetPlan = plan || selectedPlan;
+    setSelectedPlan(targetPlan);
+    setIsPaymentModalOpen(false);
+
+    // Show Payment Processing view during payment execution
+    setPaymentDetails((prev) => ({ ...prev, plan: targetPlan }));
+    setPaymentStatus("processing");
+    setProcessingStep("Creating secure transaction order with server...");
+    setProcessingStepIndex(1);
+
+    try {
+      const res = await createOrder({
+        planID: targetPlan.id,
+      });
+
+      if (res && res.success && res.data?.order) {
+        setProcessingStep("Awaiting payment authorization via gateway...");
+        setProcessingStepIndex(2);
+
+        const paymentObject = new window.Razorpay({
+          key: "rzp_test_TCGPlFcfHm3Qkm",
+          order_id: res.data.order.id,
+          ...res.data.order,
+          handler: function (response) {
+            setProcessingStep("Verifying payment signature & allocating credits...");
+            setProcessingStepIndex(3);
+
+            const option2 = {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            };
+            verifyPayment(option2).then(async (verifyRes) => {
+              if (verifyRes && verifyRes.success) {
+                await updatePlanStatus({ orderID: response.razorpay_order_id });
+                getPaymentHistory({ setPaymentHistory: setBillingHistory });
+                handleShowSuccess(targetPlan, response.razorpay_payment_id, response.razorpay_order_id);
+              } else {
+                handleShowFailed(
+                  targetPlan,
+                  verifyRes?.error?.message || "Payment verification failed on server.",
+                  "VERIFICATION_FAILED"
+                );
+              }
+            }).catch((err) => {
+              handleShowFailed(targetPlan, err?.message || "Payment verification request failed.", "NETWORK_ERROR");
+            });
+          },
+          modal: {
+            ondismiss: function () {
+              handleShowFailed(targetPlan, "Payment checkout was dismissed by user.", "USER_CANCELLED");
+            },
+          },
+        });
+
+        paymentObject.on("payment.failed", function (response) {
+          handleShowFailed(
+            targetPlan,
+            response.error?.description || "Payment failed or was declined by payment gateway.",
+            response.error?.code || "PAYMENT_DECLINED"
+          );
+        });
+
+        paymentObject.open();
+      } else {
+        handleShowFailed(
+          targetPlan,
+          res?.error?.message || "Unable to initialize order with server. Please try again.",
+          "ORDER_CREATION_FAILED"
+        );
+      }
+    } catch (err) {
+      handleShowFailed(
+        targetPlan,
+        err?.message || "An unexpected error occurred during payment setup.",
+        "CLIENT_ERROR"
+      );
+    }
   };
 
   /**
    * Data definition for the 4 pricing cards
-   * - Card 1: Price 299, 500 Credits, 1 Month, 50/day max
-   * - Card 2: Price 599, 1500 Credits, 2 Months, 100/day max (RECOMMENDED)
-   * - Card 3: Price 899, 3000 Credits, 4 Months, 200/day max
-   * - Card 4: Price 1999, 7000 Credits, 6 Months, 500/day max
    */
   const PRICING_PLANS = [
     {
@@ -84,7 +245,7 @@ export default function BillingPage() {
       credits: 1500,
       validity: "2 Months",
       dailyLimit: 100,
-      isRecommended: true, // Card 2 is RECOMMENDED
+      isRecommended: true,
       badgeText: "RECOMMENDED",
       features: [
         "Plan validity for 2 Months",
@@ -133,10 +294,27 @@ export default function BillingPage() {
     },
   ];
 
+  const loadScript = (src) => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
+
+  useEffect(() => {
+    loadScript("https://checkout.razorpay.com/v1/checkout.js");
+  }, []);
+
   return (
     <Protect>
       <MainPage>
-        {/* Toast Notification Container */}
         <Toaster1 data={toasterData} />
 
         <div className="flex-1 px-4 md:px-8 py-6 mb-20 md:py-8 max-w-7xl mx-auto w-full space-y-8 animate-fade-in">
@@ -147,142 +325,172 @@ export default function BillingPage() {
             createProjectButton={false}
           />
 
-          {/* Current Balance & Credit Info Banner */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Active Balance Card */}
-            <GlassCard hoverEffect={false} className="relative overflow-hidden bg-slate-950/60 border-slate-800">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <CreditCard className="w-4 h-4 text-sky-400" />
-                  Current Active Plan
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-                  Active
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white">Starter Free</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-2">
-                Daily reset cap: 50 credits/day
-              </p>
-            </GlassCard>
+          {/* IN-PAGE VIEW SWITCHING (No separate routes) */}
+          {paymentStatus === "processing" && (
+            <PaymentProcessingComponent
+              plan={paymentDetails.plan || selectedPlan}
+              step={processingStep}
+              stepIndex={processingStepIndex}
+              onCancel={() => setPaymentStatus("idle")}
+            />
+          )}
 
-            {/* Remaining Credit Balance */}
-            <GlassCard hoverEffect={false} className="relative overflow-hidden bg-slate-950/60 border-slate-800">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-sky-400" />
-                  Available Credits
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-[10px] font-black text-sky-400 uppercase tracking-widest">
-                  Ready
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-sky-400">450</span>
-                <span className="text-xs text-slate-400 font-bold">/ 500 Credits</span>
-              </div>
-              <div className="w-full bg-slate-800/80 h-2 rounded-full mt-3 overflow-hidden">
-                <div className="bg-gradient-to-r from-sky-500 to-blue-500 h-full w-[90%] rounded-full shadow-[0_0_8px_#38bdf8]" />
-              </div>
-            </GlassCard>
+          {paymentStatus === "success" && (
+            <PaymentSuccessComponent
+              plan={paymentDetails.plan}
+              paymentId={paymentDetails.paymentId}
+              orderId={paymentDetails.orderId}
+              amount={paymentDetails.amount}
+              credits={paymentDetails.credits}
+              onBackToPlans={() => setPaymentStatus("idle")}
+            />
+          )}
 
-            {/* Credit Usage Breakdown */}
-            <GlassCard hoverEffect={false} className="relative overflow-hidden bg-slate-950/60 border-slate-800">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-sky-400" />
-                  Credit Cost Rate
-                </span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="text-slate-300 font-medium">SEO Data Generation</span>
-                  <span className="font-bold text-sky-400">5 Credits</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="text-slate-300 font-medium">Thumbnail Canvas Generation</span>
-                  <span className="font-bold text-sky-400">20 Credits</span>
-                </div>
-              </div>
-            </GlassCard>
-          </div>
+          {paymentStatus === "failed" && (
+            <PaymentFailedComponent
+              plan={paymentDetails.plan}
+              error={paymentDetails.error}
+              code={paymentDetails.code}
+              onRetry={() => {
+                setPaymentStatus("idle");
+                if (paymentDetails.plan) {
+                  handleOpenPaymentModal(paymentDetails.plan);
+                }
+              }}
+              onBackToPlans={() => setPaymentStatus("idle")}
+            />
+          )}
 
-          {/* Pricing Section Header */}
-          <div className="pt-4">
-            <div className="flex items-center pl-0.5 mb-2">
-              <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
-              <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
-                Subscription Credit Packages
-              </h2>
-            </div>
-            <p className="text-xs text-slate-400 pl-4">
-              Select a plan to unlock higher daily credit caps and total generation allowances.
-            </p>
-          </div>
-
-          {/* 4 CARDS PRICING GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch pt-2">
-            {PRICING_PLANS.map((plan) => (
-              <BillingCard
-                key={plan.id}
-                title={plan.title}
-                subtitle={plan.subtitle}
-                price={plan.price}
-                credits={plan.credits}
-                validity={plan.validity}
-                dailyLimit={plan.dailyLimit}
-                features={plan.features}
-                isRecommended={plan.isRecommended}
-                badgeText={plan.badgeText}
-                onSubscribe={() => handleOpenPaymentModal(plan)}
-              />
-            ))}
-          </div>
-
-          {/* Bottom Trust & Feature FAQ Highlights */}
-          <div className="mt-16 pt-8 border-t border-slate-900">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-900/30 border border-slate-800/60">
-                <Shield className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Instant Activation</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Credits are added to your workspace instantly after successful payment.
+          {paymentStatus === "idle" && (
+            <>
+              {/* Top 3 Metric Cards Grid */}
+              <div className="grid  gap-5">
+                {/* Pricing Section Header */}
+                <div className="pt-4">
+                  <div className="flex items-center pl-0.5 mb-2">
+                    <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
+                    <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
+                      Subscription History & Active Plan
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-400 pl-4">
+                  see your all palns
                   </p>
                 </div>
+                {/* 1. SUBSCRIPTION HISTORY CARD (Replaces Active Plan Card) */}
+                <SubscriptionHistoryCard
+                  history={billingHistory}
+                  onSeeAll={() => setIsHistoryModalOpen(true)}
+                />
+
+                {/* 2. Remaining Credit Balance */}
               </div>
 
-              <div className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-900/30 border border-slate-800/60">
-                <CheckCircle2 className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Rollover Protection</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Unused total credits stay valid for the full plan duration.
-                  </p>
+              {/* Pricing Section Header */}
+              <div className="pt-4">
+                <div className="flex items-center pl-0.5 mb-2">
+                  <span className="w-1 h-5 bg-sky-400 rounded shadow-[0_0_8px_#38bdf8] mr-3" />
+                  <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-300">
+                    Subscription Credit Packages
+                  </h2>
                 </div>
+                <p className="text-xs text-slate-400 pl-4">
+                  Select a plan to unlock higher daily credit caps and total
+                  generation allowances.
+                </p>
               </div>
 
-              <div className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-900/30 border border-slate-800/60">
-                <HelpCircle className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Need Custom Volume?</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                    Contact creator support for custom multi-channel agency packages.
-                  </p>
+              {/* 4 CARDS PRICING GRID */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch pt-2">
+                {PRICING_PLANS.map((plan) => (
+                  <BillingCard
+                    key={plan.id}
+                    title={plan.title}
+                    subtitle={plan.subtitle}
+                    price={plan.price}
+                    credits={plan.credits}
+                    validity={plan.validity}
+                    dailyLimit={plan.dailyLimit}
+                    features={plan.features}
+                    isRecommended={plan.isRecommended}
+                    badgeText={plan.badgeText}
+                    onSubscribe={() => handleOpenPaymentModal(plan)}
+                  />
+                ))}
+              </div>
+
+              {/* Bottom Trust Highlights */}
+              <div className="mt-16 pt-8 border-t border-slate-900">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-900/30 border border-slate-800/60">
+                    <Shield className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                        Instant Activation
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Credits are added to your workspace instantly after
+                        successful payment.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-900/30 border border-slate-800/60">
+                    <CheckCircle2 className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                        Rollover Protection
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Unused total credits stay valid for the full plan
+                        duration.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3.5 p-4 rounded-xl bg-slate-900/30 border border-slate-800/60">
+                    <HelpCircle className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                        Need Custom Volume?
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Contact creator support for custom multi-channel agency
+                        packages.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
+
+        {/* SUBSCRIPTION HISTORY FULL LIST MODAL */}
+        <SubscriptionHistoryModal
+          isOpen={isHistoryModalOpen}
+          history={billingHistory}
+          onClose={() => setIsHistoryModalOpen(false)}
+        />
 
         {/* BOTTOM POPUP PAYMENT CONFIRMATION CARD */}
         <PaymentConfirmationModal
           isOpen={isPaymentModalOpen}
           plan={selectedPlan}
           onClose={() => setIsPaymentModalOpen(false)}
-          onConfirm={handleConfirmPayment}
+          onConfirm={(plan) => {
+            handleConfirmPayment(plan || selectedPlan);
+          }}
+          onSimulateSuccess={(plan) => {
+            handleShowSuccess(plan || selectedPlan);
+          }}
+          onSimulateFailure={(plan) => {
+            handleShowFailed(
+              plan || selectedPlan,
+              "Simulated payment declined for testing (Insufficient funds or card decline)",
+              "ERR_SIMULATED_DECLINE",
+            );
+          }}
         />
       </MainPage>
     </Protect>
