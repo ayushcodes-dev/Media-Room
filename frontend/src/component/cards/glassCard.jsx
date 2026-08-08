@@ -12,12 +12,12 @@ export const GlassCard = ({
     <div
       onClick={onClick}
       className={`
-         backdrop-blur-xl  bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6
+         backdrop-blur-xl  bg-slate-900/40 border border-slate-800/60 rounded-2xl 
         shadow-[0_8px_32px_rgba(0,0,0,0.5)]
-        transition-all duration-350 ease-out
+        transition-all duration-350 ease-out p-2 lg:p-6
         ${onClick ? "cursor-pointer" : ""}
         ${hoverEffect ? "hover:border-sky-500/30 hover:shadow-[0_0_25px_rgba(14,165,233,0.12)] " : ""}
-        ${className}
+        ${className} 
       `}
     >
       {/* Dynamic neon corner ambient glow */}

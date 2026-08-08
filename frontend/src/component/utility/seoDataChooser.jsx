@@ -72,12 +72,12 @@ function CircleChooser({ items = [], activeIndex, onChange }) {
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              className="relative z-10 flex flex-col items-center focus:outline-none group"
+              className="relative w-14 z-10 flex flex-col items-center focus:outline-none group"
             >
               {/* Outer Circular Ring with Blurs and Shadows */}
               <div
                 className={`
-                  w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform
+                  w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 transform
                   ${
                     isActive
                       ? "bg-slate-900 border-2 border-sky-400 scale-110 shadow-[0_0_20px_rgba(56,189,248,0.5)]"
@@ -110,7 +110,7 @@ function CircleChooser({ items = [], activeIndex, onChange }) {
                     : "text-slate-600 group-hover:text-slate-500"
                 }`}
               >
-                SEO Data {idx + 1}
+                Data {idx + 1}
               </span>
             </button>
           );

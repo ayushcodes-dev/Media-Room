@@ -26,6 +26,7 @@ import deleteProject from "@/features/project/delete.project.js";
 import SEODataChooser from "@/component/utility/seoDataChooser.jsx";
 import ProjectNotFound from "@/component/notFound/ProjectNotFound.jsx";
 import SeoDataSkeleton from "@/component/loader/seoDataSkeleton.jsx";
+import DeleteConfirmModal from "@/component/cards/deleteConfirmModal.jsx";
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
@@ -62,6 +63,8 @@ export default function App() {
   const [videoDesc, setVideoDesc] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const popupRef = useRef(null);
   const buttonRef = useRef(null);
   const { projectID } = useParams();
@@ -81,18 +84,23 @@ export default function App() {
     setSeoButtonDisable(resolvedVideoDesc.trim().length < 5);
   }, [resolvedVideoDesc]);
 
-  const handleDeleteProject = () => {
-    setShowPopup(false);
-    deleteProject(
-      { projectID },
-      {
-        setProjectData,
-        setToasterData,
-        setprojectStatus,
-        projectStatus,
-        setProjectNotFound,
-      },
-    );
+  const handleConfirmDeleteProject = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteProject(
+        { projectID },
+        {
+          setProjectData,
+          setToasterData,
+          setprojectStatus,
+          projectStatus,
+          setProjectNotFound,
+        },
+      );
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
   };
   useEffect(() => {
     const project = projectData.find((data) => data.projectID === projectID);
@@ -202,48 +210,84 @@ export default function App() {
             {/* TOP DASHBOARD CONTROL PANEL */}
             <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900/65 pb-6">
               <div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                  Project
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                  Project Details
                 </h1>
                 <p className="text-xs text-slate-400 mt-1">
-                  your project details
+                  Manage metadata, SEO tags, and thumbnail prompts for your workspace
                 </p>
               </div>
 
+              {/* Responsive Options Menu Button */}
               <div className="relative flex items-center gap-2.5">
                 <div ref={buttonRef}>
-                  <NeonButton2
-                    variant="secondary"
-                    icon={MoreVertical}
-                    className="text-xs"
+                  <button
                     onClick={() => setShowPopup((prev) => !prev)}
-                  ></NeonButton2>
+                    className="relative flex items-center gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-sky-500/50 text-slate-300 hover:text-white shadow-md hover:shadow-[0_0_20px_rgba(14,165,233,0.25)] transition-all duration-300 active:scale-95 text-xs font-extrabold select-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                    aria-label="Project Actions Menu"
+                    title="Project Actions Menu"
+                  >
+                    <MoreVertical className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span className="tracking-wider uppercase text-[11px] font-black">Options</span>
+                  </button>
                 </div>
 
+                {/* Themed Dropdown Popup */}
                 <div
-                  className={`absolute right-0 top-full z-20 mt-3 w-[220px] sm:w-[260px] transition-all duration-300 ease-out ${showPopup ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
+                  className={`absolute right-0 top-full z-30 mt-2 w-56 sm:w-64 transition-all duration-300 ease-out origin-top-right ${
+                    showPopup
+                      ? "opacity-100 scale-100 pointer-events-auto"
+                      : "opacity-0 scale-95 pointer-events-none"
+                  }`}
                 >
                   <div ref={popupRef}>
                     <GlassCard
                       hoverEffect={false}
-                      className="p-4 bg-slate-950/95 border-slate-800/90 shadow-[0_0_40px_rgba(15,23,42,0.65)]"
+                      className="p-3 bg-slate-950/95 border-slate-800/90 shadow-[0_10px_40px_rgba(0,0,0,0.85)] rounded-2xl relative overflow-hidden"
                     >
-                      <div className="flex flex-col gap-4">
-                        <div className="text-[11px] uppercase tracking-[0.35em] text-slate-500"></div>
-                        <Button1
-                          onClick={handleDeleteProject}
-                          variant="outline"
-                          className="w-full justify-between rounded-xl border border-rose-400 bg-rose-600/10 text-rose-200 text-xs font-medium tracking-wide uppercase hover:bg-rose-600/20 hover:text-white"
+                      {/* Dynamic Neon Cyan Accent Bar */}
+                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-sky-400 via-indigo-500 to-rose-500" />
+                      
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 py-1.5 border-b border-slate-800/60 mb-2 flex items-center justify-between">
+                        <span>Project Actions</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_#38bdf8]" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => {
+                            setShowPopup(false);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/25 hover:text-white hover:border-rose-500/50 transition-all text-xs font-bold group cursor-pointer"
                         >
-                          <span className="text-xs">Delete project</span>
-                          <Trash2 className="w-4 h-4 text-rose-400" />
-                        </Button1>
+                          <span className="flex items-center gap-2">
+                            <Trash2 className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                            <span>Delete Project</span>
+                          </span>
+                          <span className="text-[9px] font-mono text-rose-400/80 group-hover:text-rose-200 uppercase tracking-widest bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-500/30">
+                            Danger
+                          </span>
+                        </button>
                       </div>
                     </GlassCard>
                   </div>
                 </div>
               </div>
             </header>
+
+            {/* DELETE CONFIRMATION MODAL POPUP */}
+            <DeleteConfirmModal
+              isOpen={isDeleteModalOpen}
+              projectName={
+                projectStatus.find((p) => p.projectID === projectID)?.projectName ||
+                currentProjectData?.projectName ||
+                "this project"
+              }
+              onClose={() => setIsDeleteModalOpen(false)}
+              onConfirm={handleConfirmDeleteProject}
+              isDeleting={isDeleting}
+            />
             {/* project name */}
             <div className="flex items-center pl-0.5 mb-10">
               {/* Glowing sky-blue vertical indicator bar on title */}
@@ -346,7 +390,7 @@ export default function App() {
                       <div className="lg:col-span-2 space-y-6">
                         <GlassCard
                           hoverEffect={false}
-                          className="h-full flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                          className="h-full flex flex-col  justify-between shadow-[0_8px_32px_rgba(0,0,0,0.6)] "
                         >
                           <div>
                             {/* Workspace heading */}
