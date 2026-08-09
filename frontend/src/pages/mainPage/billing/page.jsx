@@ -381,6 +381,7 @@ export default function BillingPage() {
                 <SubscriptionHistoryCard
                   history={billingHistory}
                   onSeeAll={() => setIsHistoryModalOpen(true)}
+                  onRefreshHistory={() => getPaymentHistory({ setPaymentHistory: setBillingHistory })}
                 />
 
                 {/* 2. Remaining Credit Balance */}
@@ -471,6 +472,7 @@ export default function BillingPage() {
           isOpen={isHistoryModalOpen}
           history={billingHistory}
           onClose={() => setIsHistoryModalOpen(false)}
+          onRefreshHistory={() => getPaymentHistory({ setPaymentHistory: setBillingHistory })}
         />
 
         {/* BOTTOM POPUP PAYMENT CONFIRMATION CARD */}

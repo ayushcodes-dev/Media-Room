@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import GlassCard from "@/component/cards/glassCard.jsx";
+import updatePlanStatus from "@/features/billing/updatePlanStatus.js";
+
 import {
   History,
   ChevronRight,
@@ -12,6 +14,8 @@ import {
   Sparkles,
   FileText,
   Image as ImageIcon,
+  MoreVertical,
+  Loader2,
 } from "lucide-react";
 
 /**
@@ -63,7 +67,7 @@ const getStatusBadge = (item) => {
     return {
       label: rawStatus === "purchased" ? "Purchased" : "Active",
       colorClass: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
-      type: "active",
+      type: rawStatus === "active" ? "active" : "purchased",
     };
   }
 
@@ -85,21 +89,68 @@ const getStatusBadge = (item) => {
 /**
  * SubscriptionHistoryCard Component
  *
- * Displays subscription history records in thin rows based on the given backend history format:
- * { credits, dailyLimit, expirydate, orderID, planID, price, purchaseDate, seoDataCredit, status, thumbnailCredit, _id }
+ * Displays subscription history records in thin rows on the /billing page.
+ * Includes a 3-dot button on each plan row that opens a dropdown menu showing the "Activate Plan" option.
+ * If the plan is expired, the activate option is disabled.
+ * When clicked, triggers updatePlanStatus from features/billing/updatePlanStatus.js.
  *
  * @param {Object} props
  * @param {Array} props.history - Array of billing history objects
  * @param {Function} props.onSeeAll - Callback when "Show All Plans" button is clicked
+ * @param {Function} [props.onRefreshHistory] - Callback to refresh history state after activation
  */
-export default function SubscriptionHistoryCard({ history = [], onSeeAll }) {
+export default function SubscriptionHistoryCard({ history = [], onSeeAll, onRefreshHistory }) {
+  const [activatingOrderId, setActivatingOrderId] = useState(null);
+  const [activeMenuId, setActiveMenuId] = useState(null);
+
   const displayItems = history.slice(0, 3);
   const hasMoreThanThree = history.length > 3;
+
+  /**
+   * Close dropdown on click outside
+   */
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".plan-actions-dropdown")) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  /**
+   * Triggers active plan update via features/billing/updatePlanStatus
+   */
+  const handleActivatePlan = async (item) => {
+    setActiveMenuId(null);
+    const orderId = item.orderID || item.orderId;
+    if (!orderId) return;
+
+    const expiryRaw = item.expirydate || item.expiryDate;
+    const isExpired =
+      (item.status || "").toLowerCase() === "expired" ||
+      (expiryRaw && new Date(expiryRaw).getTime() < Date.now());
+
+    if (isExpired) return;
+
+    setActivatingOrderId(orderId);
+    try {
+      await updatePlanStatus({ orderID: orderId });
+      if (onRefreshHistory) {
+        onRefreshHistory();
+      }
+    } catch (err) {
+      console.error("Error updating plan status:", err);
+    } finally {
+      setActivatingOrderId(null);
+    }
+  };
 
   return (
     <GlassCard
       hoverEffect={false}
-      className="relative overflow-hidden bg-slate-950/60 border-slate-800 flex flex-col justify-between p-5 space-y-4"
+      className="relative overflow-visible bg-slate-950/60 border-slate-800 flex flex-col justify-between p-5 space-y-4"
     >
       {/* Header Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
@@ -123,16 +174,18 @@ export default function SubscriptionHistoryCard({ history = [], onSeeAll }) {
           </div>
         ) : (
           displayItems.map((item, index) => {
-      //      console.log(item)
             const statusInfo = getStatusBadge(item);
             const orderId = item.orderID || item.orderId;
+            const itemKey = item._id || item.id || orderId || index;
+            const isExpired = statusInfo.type === "expired";
+            const isAlreadyActive = statusInfo.type === "active";
 
             return (
               <div
-                key={item._id || item.id || index}
-                className="p-3 px-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 text-xs transition-all hover:border-slate-700/80 space-y-2"
+                key={itemKey}
+                className="p-3 px-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 text-xs transition-all hover:border-slate-700/80 space-y-2 relative"
               >
-                {/* Top Row: Plan Title, Price & Status */}
+                {/* Top Row: Plan Title, Price, Status Badge & 3-Dot Button */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="font-extrabold text-slate-100 truncate text-[13px]">
@@ -143,15 +196,63 @@ export default function SubscriptionHistoryCard({ history = [], onSeeAll }) {
                     </span>
                   </div>
 
-                  {/* Status Badge */}
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0 border ${statusInfo.colorClass}`}
-                  >
-                    {statusInfo.type === "active" && <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />}
-                    {statusInfo.type === "inactive" && <AlertCircle className="w-2.5 h-2.5 text-amber-400" />}
-                    {statusInfo.type === "expired" && <Clock className="w-2.5 h-2.5 text-slate-500" />}
-                    {statusInfo.label}
-                  </span>
+                  {/* Status Badge & 3-Dot Action Button */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0 border ${statusInfo.colorClass}`}
+                    >
+                      {isAlreadyActive && <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />}
+                      {statusInfo.type === "inactive" && <AlertCircle className="w-2.5 h-2.5 text-amber-400" />}
+                      {isExpired && <Clock className="w-2.5 h-2.5 text-slate-500" />}
+                      {statusInfo.label}
+                    </span>
+
+                    {/* 3-DOT BUTTON WITH DROPDOWN MENU */}
+                    <div className="relative plan-actions-dropdown">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(activeMenuId === itemKey ? null : itemKey);
+                        }}
+                        className="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all outline-none cursor-pointer"
+                        title="More options"
+                      >
+                        {activatingOrderId === orderId ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                        ) : (
+                          <MoreVertical className="w-3.5 h-3.5 text-slate-400 hover:text-sky-300" />
+                        )}
+                      </button>
+
+                      {/* Dropdown Menu showing "Activate Plan" option */}
+                      {activeMenuId === itemKey && (
+                        <div className="absolute right-0 top-full mt-1 z-30 min-w-[140px] p-1 bg-slate-950 border border-slate-800 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-fade-in space-y-0.5">
+                          <button
+                            type="button"
+                            disabled={isExpired || isAlreadyActive || activatingOrderId === orderId}
+                            onClick={() => handleActivatePlan(item)}
+                            className={`w-full px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all text-left ${
+                              isExpired
+                                ? "text-slate-600 cursor-not-allowed opacity-50 bg-transparent"
+                                : isAlreadyActive
+                                ? "text-emerald-400 cursor-default bg-emerald-500/10"
+                                : "text-sky-300 hover:bg-sky-500/20 hover:text-white cursor-pointer"
+                            }`}
+                          >
+                            <Zap className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                            <span>
+                              {isAlreadyActive
+                                ? "Plan is Active"
+                                : isExpired
+                                ? "Plan Expired"
+                                : "Activate Plan"}
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Credits & Limits Breakdown */}
@@ -220,4 +321,3 @@ export default function SubscriptionHistoryCard({ history = [], onSeeAll }) {
     </GlassCard>
   );
 }
-
