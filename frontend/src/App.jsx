@@ -6,6 +6,7 @@ import Dashboard from "./pages/mainPage/dashboard/page.jsx";
 import ProjectsHome from "./pages/mainPage/projects/page.jsx";
 import Billing from "./pages/mainPage/billing/page.jsx";
 import UsagePage from "./pages/mainPage/usage/page.jsx";
+import SettingPage from "./pages/mainPage/setting/page.jsx";
 import ProjectDataPage from "./pages/subpages/project/projectID/page.jsx";
 import OAuth from "./pages/auth/OAuth.jsx";
 
@@ -26,6 +27,8 @@ useEffect(()=>{
         <Route path="/billing" element={<Billing />} />
         <Route path="/usages" element={<UsagePage />} />
         <Route path="/usage" element={<UsagePage />} />
+        <Route path="/setting" element={<SettingPage />} />
+        <Route path="/settings" element={<SettingPage />} />
        
         <Route path="/projects/:projectID" element={<ProjectDataPage />} />
         <Route path="/oAuth/callback/:provider" element={<OAuth />} />

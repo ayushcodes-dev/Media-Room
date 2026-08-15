@@ -1,6 +1,6 @@
 import BillingModel from "#/database/mongoose/schema/billing.model.js";
 
-async function updatePlanStatus({ userID, orderID }) {
+async function updatePlanStatus(req, { userID, orderID }) {
   try {
     const billing = await BillingModel.findOne({ userID });
     if (!billing) {
@@ -16,7 +16,13 @@ async function updatePlanStatus({ userID, orderID }) {
          };
     }
     billing.plans.forEach((plan) => {
-      plan.status = plan.orderID === orderID ? "active" : "inactive";
+      if(plan.orderID===orderID){
+        plan.status= "active"
+          req.session.activePlanOrderID=orderID
+      }else{
+        plan.status= "inactive"
+      }
+     
     });
  
    await billing.save()

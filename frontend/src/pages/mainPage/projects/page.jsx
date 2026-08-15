@@ -82,6 +82,8 @@ export default function App() {
     handleApp();
   }, []);
 
+
+
   //  useEffect(() => {
   //    document.title = "Projects | Media Room";
   //    async function fetch() {

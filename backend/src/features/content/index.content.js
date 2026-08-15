@@ -2,10 +2,13 @@ import getPrompt from "./index.prompt.js";
 import { GoogleGenAI } from "@google/genai";
 import { OpenAI } from "openai";
 
+import { UsageModel } from "#/database/mongoose/schema/index.model.js";
+
 import {
   ProjectModel,
   ContentModel,
 } from "#/database/mongoose/schema/index.model.js";
+import getUsage from "#/features/usage/get.usage.js";
 // generating content using gemini api
 async function GeminiGenerateContent(prompt) {
   try {
@@ -88,74 +91,6 @@ async function huggingface(prompt) {
     };
   }
 }
-//. genertating content using my deployed gemini ai api
-async function mygeminiservice(prompt) {
-  try {
-    const res = await fetch(
-      "https://api-service-d2wo.onrender.com/api/gemini/gen",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-        }),
-      },
-    );
-    if (!res) {
-      return {
-        success: false,
-        statusCode: 500,
-        message: "failed to fetch data",
-        errorCode: "FAILED_TO_FETCH",
-        errors: null,
-      };
-    }
-    if (!res.ok) {
-      console.log("Error from Gemini service:", res);
-      return {
-        success: false,
-        statusCode: 500,
-        message: "failed to fetch data",
-        errorCode: "FAILED_TO_FETCH",
-        errors: null,
-      };
-    }
-    const data = await res.json();
-
-    if (!data.data) {
-      console.log("Invalid response from Gemini service:", data);
-      return {
-        success: false,
-        statusCode: 500,
-        message: "failed to fetch data",
-        errorCode: "FAILED_TO_FETCH",
-        errors: null,
-      };
-    }
-
-    return {
-      success: true,
-      statusCode: 500,
-      message: "successfully got content ",
-      error: null,
-      data: {
-        content: data.data,
-        reasoning_content: null,
-      },
-    };
-  } catch (error) {
-    console.log("error in local gemii gen content ", error);
-    return {
-      success: false,
-      statusCode: 500,
-      message: "Internal Server Error",
-      errorCode: "INTERNAL_SERVER_ERROR",
-      errors: null,
-    };
-  }
-}
 
 async function AI_Bazzar_Gemini_service(prompt) {
   try {
@@ -199,36 +134,35 @@ async function AI_Bazzar_Gemini_service(prompt) {
         errors: null,
       };
     }
-    if(resdata.data.success){
-      const rawContent= resdata.data.response
-    //console.log(resdata);
-    let data = rawContent;
-  
-    try {
-      data = JSON.parse(rawContent)
-    } catch {
-      const cleanText = rawContent
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
+    if (resdata.data.success) {
+      const rawContent = resdata.data.response;
+      //console.log(resdata);
+      let data = rawContent;
 
-      data = JSON.parse(cleanText);
+      try {
+        data = JSON.parse(rawContent);
+      } catch {
+        const cleanText = rawContent
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+
+        data = JSON.parse(cleanText);
+      }
+
+      return {
+        success: true,
+        statusCode: 500,
+        message: "successfully got content ",
+        error: null,
+        data: {
+          content: data,
+          reasoning_content: null,
+        },
+      };
+    } else {
+      throw new Error("failed to get data");
     }
-
-    return {
-      success: true,
-      statusCode: 500,
-      message: "successfully got content ",
-      error: null,
-      data: {
-        content: data,
-        reasoning_content: null,
-      },
-    };
-  }
-  else{
-    throw new Error("failed to get data")
-  }
   } catch (error) {
     console.log("error in ai bazaar gemini gen content ", error);
     return {
@@ -283,16 +217,70 @@ async function changeProjectStatus(userID, Data) {
     };
   }
 }
+// update credits usage
+async function updateCredit(userID, Data) {
+  try {
+    console.log(Data)
+    const result = await UsageModel.updateOne(
+      {
+        userID,
+        orderID: Data.orderID,
+      },
+
+      {
+        $inc: { usedCredit: Data.creditUsed },
+        $push: { usage:{
+          action: Data.action,
+          date: new Date(),
+          projectID: Data.projectID,
+          creditUsed: Data.creditUsed,
+        }
+        },
+      
+      },
+      
+    );
+
+    if (result.matchedCount === 0 || result.modifiedCount === 0) {
+      console.error("error in change project status", result);
+      return {
+        success: false,
+        statusCode: 404,
+        message: "Failed to change project status",
+        errorCode: "FAILED_TO_UPDATE",
+        errors: null,
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: "successfully updated status",
+      errorCode: null,
+      errors: null,
+    };
+  } catch (error) {
+    console.error("error in change project status", error);
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: null,
+    };
+  }
+}
+
+
 async function storeContent(userID, projectID, Data) {
   try {
-   const newContent = await ContentModel.create({
-     userID,
-     projectID,
-     title: Data.title,
-     description: Data.description,
-     tags: Data.tags,
-     thumbnailDescription: Data.thumbnailDescription,
-   });
+    const newContent = await ContentModel.create({
+      userID,
+      projectID,
+      title: Data.title,
+      description: Data.description,
+      tags: Data.tags,
+      thumbnailDescription: Data.thumbnailDescription,
+    });
     return {
       success: true,
       statusCode: 200, // 200 is appropriate for updates, 201 for new creations
@@ -310,19 +298,23 @@ async function storeContent(userID, projectID, Data) {
     };
   }
 }
+
 async function generateContent(req, Data) {
   const userID = req.session.userID;
   const { projectID, videoDescription } = Data;
   try {
+     console.log("fine in seo data gen");
+     
     const vedieoDesc = videoDescription
       ? videoDescription
       : `my vedieo is about web dev roadmap ensures that it is not old and future proof I suggest them to learn mern for next step learn nextjs I told every parts in  detail whatlearner have to do`;
-    // changing project status to processing
-    const change = await changeProjectStatus(userID, {
-      projectID,
-      contentStatus: "processing",
-    });
-    if (!change.success) throw new Error("Failed to update status");
+
+    const change  =  await changeProjectStatus(userID, {
+        projectID,
+        contentStatus: "processing",
+      })
+     
+    
     const prompt = getPrompt(vedieoDesc);
     if (!prompt || typeof prompt !== "string") {
       throw new Error("Invalid prompt provided");
@@ -332,23 +324,33 @@ async function generateContent(req, Data) {
     if (!content.success) {
       throw new Error("Failed to fetch data");
     }
+
     // creating content in db
- const finalData = {
-   title: content.data.content.title.data,
-   description: content.data.content.description.data,
-   tags: content.data.content.tags.data,
-   thumbnailDescription: content.data.content.thumbnailDescription.data,
- };
-//  console.log(content.data.content);
-//  console.log(finalData)
+    const finalData = {
+      title: content.data.content.title.data,
+      description: content.data.content.description.data,
+      tags: content.data.content.tags.data,
+      thumbnailDescription: content.data.content.thumbnailDescription.data,
+    };
+    //  console.log(content.data.content);
+    //  console.log(finalData)
     const created = await storeContent(userID, projectID, finalData);
     if (created.success) {
       // changing project status to processing
-      const change = await changeProjectStatus(userID, {
-        projectID,
-        contentStatus: "completed",
-      });
-      if (!change.success) throw new Error("Failed to update status");
+    
+   
+     const [change] =await Promise.all([
+       changeProjectStatus(userID, {
+         projectID,
+         contentStatus: "completed",
+       }),
+     ]);
+    await  updateCredit(userID, {
+       orderID: req.orderID,
+       action: "seoData",
+       projectID: projectID,
+       creditUsed: req.seoDataCredit,
+     });
       return {
         success: true,
         statusCode: 200,
@@ -357,7 +359,7 @@ async function generateContent(req, Data) {
       };
     }
   } catch (error) {
-   console.log("generate Error:", error);
+    console.log("generate Error:", error);
     // changing project status to failed
     const change = await changeProjectStatus(userID, {
       projectID,
@@ -373,4 +375,4 @@ async function generateContent(req, Data) {
   }
 }
 
-export default generateContent; 
+export default generateContent;

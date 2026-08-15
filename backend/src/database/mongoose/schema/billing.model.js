@@ -27,10 +27,6 @@ const billingSchema = new mongoose.Schema(
           type: Number,
           required: true,
         },
-        dailyLimit:{
-            type: Number,
-          required: true,
-        },
         status: {
           type: String,
           required: true,

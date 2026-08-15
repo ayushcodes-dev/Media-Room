@@ -2,6 +2,7 @@ import crypto from "crypto";
 import PaymentModel from "#/database/mongoose/schema/paymentProcess.model.js";
 import BillingModel from "#/database/mongoose/schema/billing.model.js";
 import { plans } from "#/utility.js";
+import { UsageModel } from "#/database/mongoose/schema/index.model.js";
 
 async function updatePaymentProcess({ orderID, paymentID, planPurchased }) {
   try {
@@ -40,9 +41,7 @@ async function updateBillingPlan({ userID, planID, orderID }) {
       planID: planID,
       price: plan?.price || 0,
       orderID: orderID,
-      price: plan?.price,
-      credits: plan.credits,
-      dailyLimit: plan.dailyLimit,
+      credits: plan?.credits || 0,
       status: "purchased",
       seoDataCredit: plan.seoDataCredit,
       thumbnailCredit: plan.thumbnailCredit,
@@ -80,13 +79,30 @@ async function updateBillingPlan({ userID, planID, orderID }) {
     };
   }
 }
-
+async function createusageDoc({userID,planID,orderID}){
+  try{
+     const plan = plans.find((plan) => plan.planID === planID);
+const insert = await UsageModel.create({
+  userID,
+  planID,
+  orderID,
+  totalCredits: plan.credits,
+  usedCredit:0
+});
+return({
+  success:true
+})
+  }catch(err){
+return ({success:false})
+  }
+}
 async function verifyPayment({
   razorpay_payment_id,
   razorpay_order_id,
   razorpay_signature,
   userID
 }) {
+  try{
 //  console.log("verifyPayment")
   //  console.log(order_id, payment_id, signature);
   const secret = process.env.RAZORPAY_API_SECRET;
@@ -106,14 +122,21 @@ async function verifyPayment({
         message: "Payment process not found",
       };
     }
+   const [updateBillingPlanResult, usage] = await Promise.all([
+     updateBillingPlan({
+       userID,
+       planID: userPaymentProcess.planID,
+       orderID: razorpay_order_id,
+     }),
+     createusageDoc({
+       userID,
+       planID: userPaymentProcess.planID,
+       orderID: razorpay_order_id,
+     }),
+   ]);
 
-    const updateBillingPlanResult = await updateBillingPlan({
-      userID,
-      planID: userPaymentProcess.planID,
-      orderID: razorpay_order_id,
-    });
-    if (!updateBillingPlanResult.success) {
-   //   console.log("updateBillingPlanResult", updateBillingPlanResult);
+    if (!(updateBillingPlanResult.success&&usage.success)) {
+     // console.log("updateBillingPlanResult", updateBillingPlanResult, usage);
       return {
         success: false,
         message: "an error occured during payment verification",
@@ -134,5 +157,13 @@ async function verifyPayment({
       message: "payment verification failed",
     };
   }
+}catch(err){
+  console.log(err)
+   return {
+     success: false,
+     message: "payment verification failed",
+
+   };
+}
 }
 export default verifyPayment;

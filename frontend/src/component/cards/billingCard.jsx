@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Sparkles, Zap, ShieldCheck, Clock, Crown, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Zap, ShieldCheck, Crown, ArrowRight } from "lucide-react";
 import GlassCard from "@/component/cards/glassCard.jsx";
 import NeonButton, { NeonButton2 } from "@/component/button/neonButton.jsx";
 
@@ -15,7 +15,6 @@ import NeonButton, { NeonButton2 } from "@/component/button/neonButton.jsx";
  * @param {number|string} props.price - Price value (e.g. 299, 599)
  * @param {number|string} props.credits - Total credits allocated (e.g. 500, 1500)
  * @param {string} props.validity - Duration validity (e.g. 1 Month, 2 Months)
- * @param {number|string} props.dailyLimit - Max credits per day (e.g. 50, 100)
  * @param {Array<string>} props.features - Array of feature description strings
  * @param {boolean} props.isRecommended - If true, highlights card as Recommended / Most Popular
  * @param {string} props.badgeText - Custom badge text for recommended plan
@@ -27,7 +26,6 @@ const BillingCard = ({
   price,
   credits,
   validity,
-  dailyLimit,
   features = [],
   isRecommended = false,
   badgeText = "MOST POPULAR",
@@ -104,8 +102,8 @@ const BillingCard = ({
             </div>
           </div>
 
-          {/* Highlight Key Specs Capsule Grid */}
-          <div className="grid grid-cols-2 gap-2.5 mb-6">
+          {/* Highlight Key Specs Capsule */}
+          <div className="grid grid-cols-1 gap-2.5 mb-6">
             {/* Total Credits Spec */}
             <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-center">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
@@ -114,17 +112,6 @@ const BillingCard = ({
               </span>
               <span className="text-base font-black text-sky-300 mt-0.5">
                 {typeof credits === "number" ? credits.toLocaleString("en-IN") : credits}
-              </span>
-            </div>
-
-            {/* Daily Limit Spec */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-center">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-sky-400" />
-                Per Day Max
-              </span>
-              <span className="text-base font-black text-slate-200 mt-0.5">
-                {dailyLimit} Credits
               </span>
             </div>
           </div>

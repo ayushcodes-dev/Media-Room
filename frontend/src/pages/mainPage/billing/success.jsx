@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   Calendar,
   Receipt,
-  FileCheck2,
   RotateCcw,
 } from "lucide-react";
 
@@ -48,7 +47,6 @@ export default function PaymentSuccessComponent({
   const planPrice = propAmount || plan?.price || 599;
   const creditsAdded = propCredits || plan?.credits || 1500;
   const validity = plan?.validity || "2 Months";
-  const dailyLimit = plan?.dailyLimit || 100;
 
   const paymentId =
     propPaymentId ||
@@ -236,17 +234,7 @@ export default function PaymentSuccessComponent({
           </h4>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800/80 space-y-1">
-            <div className="font-bold text-white flex items-center gap-1.5">
-              <FileCheck2 className="w-4 h-4 text-emerald-400" />
-              Daily Credit Limit
-            </div>
-            <p className="text-slate-400 text-[11px]">
-              Up to {dailyLimit} credits/day limit allowance.
-            </p>
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800/80 space-y-1">
             <div className="font-bold text-white flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-sky-400" />

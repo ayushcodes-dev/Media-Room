@@ -101,7 +101,6 @@ export default function BillingPage() {
         planTitle: plan.title,
         price: plan.price,
         credits: plan.credits,
-        dailyLimit: plan.dailyLimit || 100,
         seoDataCredit: 5,
         thumbnailCredit: 20,
         purchaseDate: now.toISOString(),
@@ -226,11 +225,9 @@ export default function BillingPage() {
       price: 299,
       credits: 500,
       validity: "1 Month",
-      dailyLimit: 50,
       isRecommended: false,
       features: [
         "Plan validity for 1 Month",
-        "Per-day max credit limit: 50 Credits",
         "SEO Data Generation available",
         "Thumbnail Generation available",
         "Standard generation priority",
@@ -244,12 +241,10 @@ export default function BillingPage() {
       price: 599,
       credits: 1500,
       validity: "2 Months",
-      dailyLimit: 100,
       isRecommended: true,
       badgeText: "RECOMMENDED",
       features: [
         "Plan validity for 2 Months",
-        "Per-day max credit limit: 100 Credits",
         "SEO Data Generation available",
         "Thumbnail Generation available",
         "Accelerated generation priority",
@@ -263,11 +258,9 @@ export default function BillingPage() {
       price: 899,
       credits: 3000,
       validity: "4 Months",
-      dailyLimit: 200,
       isRecommended: false,
       features: [
         "Plan validity for 4 Months",
-        "Per-day max credit limit: 200 Credits",
         "SEO Data Generation available",
         "Thumbnail Generation available",
         "High-priority generation queue",
@@ -281,11 +274,9 @@ export default function BillingPage() {
       price: 1999,
       credits: 7000,
       validity: "6 Months",
-      dailyLimit: 500,
       isRecommended: false,
       features: [
         "Plan validity for 6 Months",
-        "Per-day max credit limit: 500 Credits",
         "SEO Data Generation available",
         "Thumbnail Generation available",
         "VIP ultra-fast generation priority",
@@ -396,7 +387,7 @@ export default function BillingPage() {
                   </h2>
                 </div>
                 <p className="text-xs text-slate-400 pl-4">
-                  Select a plan to unlock higher daily credit caps and total
+                  Select a plan to unlock higher credit caps and total
                   generation allowances.
                 </p>
               </div>
@@ -411,7 +402,6 @@ export default function BillingPage() {
                     price={plan.price}
                     credits={plan.credits}
                     validity={plan.validity}
-                    dailyLimit={plan.dailyLimit}
                     features={plan.features}
                     isRecommended={plan.isRecommended}
                     badgeText={plan.badgeText}

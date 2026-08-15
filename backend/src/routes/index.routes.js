@@ -4,6 +4,7 @@ import authRouter from "./auth/auth.routes.js";
 import projectRouter  from "./project/project.routes.js";
 import oAuthRouter from "./oAuth/oAuth.routes.js";
 import billingRouter from "./billing/billing.routes.js"
+import usageRouter from "./usage/usage.routes.js"
 // router
 const router = express.Router();
 
@@ -39,6 +40,12 @@ router.use(projectRouter);
  */
 router.use(billingRouter);
 
+/**
+ * @desc Mount Usage routes
+ * Any request coming to this router will be forwarded to Usage Router
+ * @route /usage/*
+ */
+router.use(usageRouter);
 /**
  * @route   GET /
  * @desc    Fetch public home route

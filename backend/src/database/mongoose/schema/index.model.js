@@ -3,5 +3,5 @@ import ProjectModel from "./project.model.js";
 import ContentModel from "./content.model.js";
 import BillingModel from "./billing.model.js";
 import PaymentModel from "./paymentProcess.model.js";
-
-export { UserModel, ProjectModel, ContentModel, BillingModel, PaymentModel };
+import UsageModel from "./usage.model.js"
+export { UserModel, ProjectModel, ContentModel, BillingModel, PaymentModel,UsageModel };

@@ -24,15 +24,7 @@ async function saveDesc(userID, projectID, desc) {
         errors: null,
       };
     }
-    if (!result.acknowledged || result.modifiedCount === 0) {
-      return {
-        success: false,
-        statusCode: 500,
-        message: "Failed to store video description",
-        errorCode: "FAILED_TO_SAVE_VIDEO_DESC",
-        errors: null,
-      };
-    }
+  
     return {
       success: true,
       statusCode: 200,

@@ -261,12 +261,6 @@ export default function SubscriptionHistoryCard({ history = [], onSeeAll, onRefr
                     <Zap className="w-3 h-3 text-sky-400" />
                     {item.credits} Credits
                   </span>
-                  {item.dailyLimit !== undefined && (
-                    <span className="flex items-center gap-1 text-slate-400 font-medium">
-                      <Sparkles className="w-3 h-3 text-amber-400" />
-                      {item.dailyLimit}/day
-                    </span>
-                  )}
                   {item.seoDataCredit !== undefined && (
                     <span className="flex items-center gap-1 text-slate-400">
                       <FileText className="w-3 h-3 text-slate-500" />

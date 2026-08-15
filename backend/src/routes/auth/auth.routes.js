@@ -8,7 +8,8 @@ import handleSignup from "#/features/auth/signup/signup.auth.js";
 import handleSignin from "#/features/auth/signin/signin.auth.js";
 import handleSignout from "#/features/auth/signout/signout.auth.js";
 import handleStatus from "#/features/auth/status/status.auth.js";
-//import handleStatus from "#/features/auth/status/status.auth.js"; import handleUserAuth_middle from "#/middleware/auth.middleware.js";
+import handleDeleteAccount from "#/features/auth/deleteAccount/deleteAccount.auth.js";
+import { handleUserAuth_middle } from "#/middleware/auth.middleware.js";
 const router = express.Router();
 /**
  * @route   POST /auth/signin
@@ -83,7 +84,7 @@ router.post("/auth/signout", async (req, res) => {
 
 
 /**
- * @route   POST /auth/status
+ * @route   GET /auth/status
  * @desc    user auth status route
  * @access  Public
  */
@@ -96,6 +97,37 @@ router.get("/auth/status", async (req, res) => {
   } else {
     res.error({
       ...status,
+    });
+  }
+});
+
+/**
+ * @route   DELETE /auth/account
+ * @desc    Permanently delete account and user data
+ * @access  Private
+ */
+router.delete("/auth/account", handleUserAuth_middle, async (req, res) => {
+  const result = await handleDeleteAccount(req);
+  if (result.success) {
+    res.success({
+      ...result,
+    });
+  } else {
+    res.error({
+      ...result,
+    });
+  }
+});
+
+router.post("/auth/delete-account", handleUserAuth_middle, async (req, res) => {
+  const result = await handleDeleteAccount(req);
+  if (result.success) {
+    res.success({
+      ...result,
+    });
+  } else {
+    res.error({
+      ...result,
     });
   }
 });

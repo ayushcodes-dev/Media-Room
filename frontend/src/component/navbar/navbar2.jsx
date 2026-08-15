@@ -14,12 +14,25 @@ const NAV_ITEMS = [
   { id: "projects", label: "Projects", icon: FolderLock },
   { id: "usages", label: "Usages", icon: BarChart3 },
   { id: "billing", label: "Billing", icon: CreditCard },
-  { id: "profile", label: "Profile", icon: User },
   { id: "setting", label: "Setting", icon: Settings },
 ];
 export default function Navbar2({activeTab, setActiveTab, isSidebarOpen, setSidebarOpen}) {
    const navigate = useNavigate();
    const location = useLocation();
+
+   const user = (() => {
+     try {
+       const raw = typeof window !== "undefined" ? localStorage.getItem("user_auth") : null;
+       return raw ? JSON.parse(raw) : null;
+     } catch {
+       return null;
+     }
+   })();
+
+   const username = user?.username || "Creator";
+   const role = user?.role ? `${user.role.toUpperCase()} CREATOR` : "CREATOR";
+   const avatarSeed = encodeURIComponent(user?.username || user?.email || "Creator");
+
    useEffect(() => {
      NAV_ITEMS.find((item) => {
        if (location.pathname.split("/")[1] === item.id) {
@@ -27,7 +40,7 @@ export default function Navbar2({activeTab, setActiveTab, isSidebarOpen, setSide
        
        }
      });
-   }, [location.pathname, activeTab]);
+   }, [location.pathname, activeTab, setActiveTab]);
     return (
       <>
         {/* Mobile Sidebar Overlay */}
@@ -100,22 +113,29 @@ export default function Navbar2({activeTab, setActiveTab, isSidebarOpen, setSide
 
             {/* Footer Profile Section */}
             <div className="pt-4 border-t border-slate-900">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.02] transition-all duration-300 cursor-pointer group/profile">
+              <div
+                onClick={() => {
+                  setActiveTab("setting");
+                  setSidebarOpen(false);
+                  navigate("/setting");
+                }}
+                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.02] transition-all duration-300 cursor-pointer group/profile"
+              >
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-[1px] overflow-hidden shadow-md group-hover/profile:from-sky-400 group-hover/profile:to-blue-600 group-hover/profile:scale-105 transition-all duration-300">
-                  <div className="w-full h-full bg-slate-950 rounded-[11px] overflow-hidden">
+                  <div className="w-full h-full bg-slate-950 rounded-[11px] overflow-hidden flex items-center justify-center p-1">
                     <img
-                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                      src={`https://api.dicebear.com/7.x/identicon/svg?seed=${avatarSeed}`}
                       alt="avatar"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-300 group-hover/profile:text-sky-400 transition-colors duration-300 truncate">
-                    Alex Rivera
+                    {username}
                   </p>
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
-                    Pro Creator
+                    {role}
                   </p>
                 </div>
                 <Settings

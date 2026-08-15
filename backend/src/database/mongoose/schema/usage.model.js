@@ -14,26 +14,35 @@ const usageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    price: {
-      type: Number,
-      required: true,
-    },
     totalCredits: {
       type: Number,
       required: true,
     },
-    usedCredit:{
-         type: Number
-    },
-    dailyLimit: {
+    usedCredit: {
       type: Number,
-      required: true,
     },
-    
+    usage: [
+      {
+        action: {
+          type: String,
+          enum: ["thumbnail", "seoData"],
+        },
+        date: {
+          type: Date,
+        },
+        projectID:{
+          type:String,
+
+        },
+        creditUsed:{
+            type:Number
+        }
+      },
+    ],
   },
   { timestamps: true },
 );
 
-const BillingModel = mongoose.model("Usage", usageSchema);
+const UsageModel = mongoose.model("Usage", usageSchema);
 
-export default BillingModel;
+export default UsageModel;

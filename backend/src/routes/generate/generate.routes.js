@@ -3,6 +3,7 @@ import generateContent from "#/features/content/index.content.js"
 import {handleUserAuth_middle} from "#/middleware/auth.middleware.js"
 import { generateSeoDataValidator } from "#/validator/generate.validator.js";
 import validate from "#/validator/index.validate.js";
+import HandleUsage from "#/middleware/usage.middleware.js"
 const router = express.Router();
 
 
@@ -16,6 +17,7 @@ router.post(
   handleUserAuth_middle,
   generateSeoDataValidator,
   validate,
+  HandleUsage,
   async (req, res) => {
     const content = await generateContent(req, {
       projectID: req.body.projectID,
@@ -32,7 +34,7 @@ router.post(
  * @desc    generates thumbnail image for the video
  * @access  private
  */
-router.get('/generate/thumbnail',handleUserAuth_middle, async (req, res) => {
+router.get('/generate/thumbnail',handleUserAuth_middle,HandleUsage, async (req, res) => {
   const userInp= `my vedieo is about web dev roadmap ensures that it is not old and future proof I suggest them to learn mern for next step learn nextjs I told every parts in  detail whatlearner have to do`
   const content= await generateContent(userInp)
   res.success({message:"content generated", content:content});

@@ -11,7 +11,7 @@ import NeonButton, { NeonButton2 } from "@/component/button/neonButton.jsx";
  * - Plan Name
  * - Price
  * - Total Credits
- * - Validity & Daily Limits
+ * - Validity
  * 
  * @param {Object} props
  * @param {boolean} props.isOpen - Controls visibility of the popup card
@@ -132,14 +132,6 @@ const PaymentConfirmationModal = ({
 
             {/* Feature Highlights Summary */}
             <div className="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="flex items-center gap-1.5 text-slate-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
-                  Per-day max credit limit:
-                </span>
-                <span className="font-bold text-slate-100">{plan.dailyLimit} Credits/day</span>
-              </div>
-
               <div className="flex items-center justify-between text-slate-300">
                 <span className="flex items-center gap-1.5 text-slate-400">
                   <Sparkles className="w-3.5 h-3.5 text-sky-400" />

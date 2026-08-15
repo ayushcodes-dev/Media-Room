@@ -98,13 +98,42 @@ export const getAuthstatus = async () => {
     return data;
   } catch (error) {
     return {
-      error: error.response.data? error.response.data: {
-        message: "An error occurred during gettting auth status",
+      error: error.response?.data ? error.response.data : {
+        message: "An error occurred during getting auth status",
       },
       success: false,
     };
   }
 };
+
+export const signout = async () => {
+  try {
+    const response = await api.post("/auth/signout", {}, { withCredentials: true });
+    return response.data;
+  } catch (error) {
+    return {
+      error: error.response?.data ? error.response.data : {
+        message: "An error occurred during sign out",
+      },
+      success: false,
+    };
+  }
+};
+
+export const deleteAccountAPI = async () => {
+  try {
+    const response = await api.delete("/auth/account", { withCredentials: true });
+    return response.data;
+  } catch (error) {
+    return {
+      error: error.response?.data ? error.response.data : {
+        message: "An error occurred during account deletion",
+      },
+      success: false,
+    };
+  }
+};
+
 
 
 

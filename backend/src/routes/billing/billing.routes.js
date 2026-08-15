@@ -114,7 +114,7 @@ router.patch(
   updatePlanStatusValidator,
   async (req, res) => {
     const { orderID } = req.body;
-    const update = await updatePlanStatus({
+    const update = await updatePlanStatus(req,{
       userID: req.session.userID,
       orderID,
     });
