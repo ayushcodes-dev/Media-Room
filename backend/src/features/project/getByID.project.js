@@ -1,6 +1,7 @@
 import {
   ProjectModel,
   ContentModel,
+  ThumbnailModel,
 } from "#/database/mongoose/schema/index.model.js";
 
 // function to find project and its details
@@ -31,21 +32,22 @@ async function getProjectStatus(userID, projectID) {
         errors: null,
       };
     }
-    if (projects[0].matchedProject.length < 1) {
+    if (projects.length === 0 || !projects[0].matchedProject || projects[0].matchedProject.length < 1) {
       return {
         success: false,
         statusCode: 404,
-        message: "projects not found",
+        message: "Project not found",
         errorCode: "PROJECTS_NOT_FOUND",
         errors: null,
       };
     }
-    
+
     return {
       success: true,
       data: projects[0].matchedProject[0],
     };
   } catch (error) {
+    console.error("Error in getProjectStatus:", error);
     return {
       success: false,
       statusCode: 500,
@@ -56,42 +58,40 @@ async function getProjectStatus(userID, projectID) {
   }
 }
 
-
-// function to find project data and its details
+// function to find project content data
 async function getProjectData(userID, projectID) {
   try {
-    const projects = await ContentModel.find({userID:userID,projectID:projectID})
-    
-    if (!projects) {
-      return {
-        success: false,
-        statusCode: 500,
-        message: "Internal Server Error",
-        errorCode: "INTERNAL_SERVER_ERROR",
-        errors: null,
-      };
-    }
-    if (projects.length < 1) {
-      return {
-        success: false,
-        statusCode: 404,
-        message: "projects not found",
-        errorCode: "PROJECTS_NOT_FOUND",
-        errors: null,
-      };
-    }
-    
+    const contents = await ContentModel.find({ userID, projectID }).sort({
+      createdAt: -1,
+    });
     return {
       success: true,
-      data: projects,
+      data: contents || [],
     };
   } catch (error) {
+    console.error("Error in getProjectData:", error);
     return {
-      success: false,
-      statusCode: 500,
-      message: "Internal Server Error",
-      errorCode: "INTERNAL_SERVER_ERROR",
-      errors: null,
+      success: true,
+      data: [],
+    };
+  }
+}
+
+// function to find project thumbnail data
+async function getThumbnailData(userID, projectID) {
+  try {
+    const thumbnails = await ThumbnailModel.find({ userID, projectID }).sort({
+      createdAt: -1,
+    });
+    return {
+      success: true,
+      data: thumbnails || [],
+    };
+  } catch (error) {
+    console.error("Error in getThumbnailData:", error);
+    return {
+      success: true,
+      data: [],
     };
   }
 }
@@ -99,37 +99,48 @@ async function getProjectData(userID, projectID) {
 // handles the req of get projectbyid. returns the project data
 async function getProjectById(req, projectID) {
   try {
-    const project = await getProjectStatus(req.session.userID, projectID);
-  
+    const userID = req.session?.userID || req.userID;
+    const project = await getProjectStatus(userID, projectID);
+
     if (!project.success) {
-      return project; // Return the error response from getProject
+      return project;
     }
-   const projectdata = await getProjectData(req.session.userID, projectID);
-   
-    if (!projectdata.success) {
-      return projectdata; // Return the error response from getProject
-    }
-  
+
+    const [projectData, thumbnailData] = await Promise.all([
+      getProjectData(userID, projectID),
+      getThumbnailData(userID, projectID),
+    ]);
+
+    const thumbnails = thumbnailData.data || [];
+    const latestThumbnail = thumbnails.length > 0 ? thumbnails[0].thumbnailURL : null;
+
     return {
       success: true,
       statusCode: 200,
-      message: "successfully fetched project data",
+      message: "Successfully fetched project data",
       data: {
         projectID: project.data.projectID,
         projectName: project.data.projectName,
         contentStatus: project.data.contentStatus,
         thumbnailStatus: project.data.thumbnailStatus,
         videoDescription: project.data.videoDescription,
-        seoData: projectdata.data,
+        customPrompt: project.data.customPrompt,
+        seoData: projectData.data || [],
+        thumbnail: latestThumbnail,
+        thumbnails: thumbnails,
       },
       errorCode: null,
       errors: null,
     };
-
-    return { success: true, data: project.data };
   } catch (error) {
     console.error("Error in getProjectById:", error);
-    return { success: false, message: "Server error" };
+    return {
+      success: false,
+      statusCode: 500,
+      message: "Internal Server Error",
+      errorCode: "INTERNAL_SERVER_ERROR",
+      errors: error.message,
+    };
   }
 }
 

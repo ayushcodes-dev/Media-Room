@@ -376,3 +376,4 @@ async function generateContent(req, Data) {
 }
 
 export default generateContent;
+export { AI_Bazzar_Gemini_service };

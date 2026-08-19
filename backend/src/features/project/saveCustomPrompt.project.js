@@ -25,15 +25,7 @@ async function savePrompt(userID, projectID, prompt) {
         errors: null,
       };
     }
-    if (!result.acknowledged || result.modifiedCount === 0) {
-      return {
-        success: false,
-        statusCode: 500,
-        message: "Failed to save custom prompt",
-        errorCode: "FAILED_TO_SAVE_CUSTOM_PROMPT",
-        errors: null,
-      };
-    }
+  
     return {
       success: true,
       statusCode: 200,

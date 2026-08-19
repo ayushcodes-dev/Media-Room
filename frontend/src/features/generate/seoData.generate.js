@@ -1,7 +1,28 @@
 import { generate_SEO_DataAPI } from "@/api/generate.js";
 import { saveVideoDesc_API } from "@/api/project.js";
 
-//function to generate seodata
+// Helper to detect payment, plan, credit, or subscription errors
+const isPaymentOrBillingError = (data, errorMsg, errorCode) => {
+  const code = (errorCode || "").toUpperCase();
+  const msg = (errorMsg || "").toLowerCase();
+  return (
+    data?.statusCode === 402 ||
+    code === "NO_ACTIVE_PLAN" ||
+    code === "INSUFFICIENT_CREDITS" ||
+    code === "PLAN_EXPIRED" ||
+    code === "PAYMENT_REQUIRED" ||
+    code === "USAGE_CHECK_FAILED" ||
+    msg.includes("plan") ||
+    msg.includes("credit") ||
+    msg.includes("payment") ||
+    msg.includes("subscription") ||
+    msg.includes("expire") ||
+    msg.includes("not enough") ||
+    msg.includes("limit")
+  );
+};
+
+// function to generate seodata
 async function generateSEOData(
   { videoDescription, projectID },
   {
@@ -9,48 +30,41 @@ async function generateSEOData(
     setProjectData,
     setSeoButtonDisable,
     setActiveSEOData,
+    setBillingErrorModalData,
     currentProjectData,
   },
 ) {
   setSeoButtonDisable(true);
   saveVideoDesc_API({ description: videoDescription, projectID })
     .then((data) => {
-      if (data.success) {
-        // setToasterData([
-        //   {
-        //     status: "success",
-        //     info: data.message,
-        //     duration: 3000,
-        //   },
-        // ]);
-      } else {
-        setToasterData([
-          {
-            status: "error",
-            info: data.message,
-            duration: 9000,
-          },
-        ]);
+      if (!data.success) {
+        console.warn("Error saving video description:", data.message);
       }
     })
     .catch((err) => {
-      setToasterData([
-        {
-          status: "error",
-          info: err.error.message,
-          duration: 9000,
-        },
-      ]);
+      console.warn("Error saving video description:", err);
     });
-  // generatng seo data
+
+  // generating seo data
   const data = await generate_SEO_DataAPI({ videoDescription, projectID });
   if (!data.success) {
-   // console.log(data);
+    const errorMsg = data.message || data.error?.message || "";
+    const errorCode = data.error?.errorCode || data.errorCode || "";
 
-    if (data && data?.error.error.errorCode === "VALIDATION_ERROR") {
-      const messages = data.error.error.error
-        .map((detail) => detail.msg)
-        .join(".\n");
+    if (isPaymentOrBillingError(data, errorMsg, errorCode) && setBillingErrorModalData) {
+      setBillingErrorModalData({
+        isOpen: true,
+        errorCode,
+        message: errorMsg,
+      });
+      setSeoButtonDisable(false);
+      return;
+    }
+
+    if (data && data?.error?.errorCode === "VALIDATION_ERROR") {
+      const messages = Array.isArray(data.error.error)
+        ? data.error.error.map((detail) => detail.msg).join(".\n")
+        : errorMsg;
       setToasterData([
         {
           status: "error",
@@ -65,7 +79,7 @@ async function generateSEOData(
     setToasterData([
       {
         status: "error",
-        info: data.error.message,
+        info: errorMsg || "Failed to generate SEO data",
         duration: 7000,
       },
     ]);
@@ -77,20 +91,17 @@ async function generateSEOData(
     {
       status: "success",
       info: "SEO Data Generated successfully!",
-      // align: "bottom-right",
     },
   ]);
 
   const GeneratedData = {
-    title: data.data.title,
-    description: data.data.description,
-    tags: data.data.tags,
-    thumbnailDescription: data.data.thumbnailDescription,
+    title: data.data?.title,
+    description: data.data?.description,
+    tags: data.data?.tags,
+    thumbnailDescription: data.data?.thumbnailDescription,
   };
   setProjectData((prev) => {
-    const findProject = prev.find((data) => {
-      if (data.projectID === projectID) return data;
-    });
+    const findProject = prev.find((d) => d.projectID === projectID);
     if (!findProject) {
       const newdata = {
         projectID,
@@ -98,22 +109,19 @@ async function generateSEOData(
       };
       return [...prev, newdata];
     }
-    const data = prev.map((data) => {
-      if (data.projectID === projectID) {
-        // Return a NEW object copy with the updated seoData
+    const updated = prev.map((d) => {
+      if (d.projectID === projectID) {
         return {
-          ...data,
-          seoData: [...data.seoData, GeneratedData],
+          ...d,
+          seoData: [...(d.seoData || []), GeneratedData],
         };
       }
-      // Return the original object if it doesn't match
-      return data;
+      return d;
     });
-    return data;
+    return updated;
   });
   setSeoButtonDisable(false);
-  //console.log(currentProjectData.length);
-  setActiveSEOData(currentProjectData.seoData?.length);
+  setActiveSEOData(currentProjectData?.seoData?.length || 0);
   return GeneratedData;
 }
 export default generateSEOData;

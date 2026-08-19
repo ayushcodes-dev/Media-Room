@@ -487,6 +487,7 @@ export default function UsagePage() {
                     <span className="flex items-center gap-1">
                       <FileText className="w-3.5 h-3.5 text-sky-400" />
                       SEO: <strong className="text-slate-200">{activePlan?.seoDataCredit || 5} Cr</strong>
+                      <p>anuall income is 50 lakh</p>
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">

@@ -86,3 +86,22 @@ export const saveVideoDesc_API = async ({ projectID, description }) => {
     };
   }
 };
+
+export const saveCustomPrompt_API = async ({ projectID, prompt }) => {
+  try {
+    const response = await api.post(
+      "/project/" + projectID + "/customPrompt",
+      { prompt },
+    );
+    const data = response.data;
+    return data;
+  } catch (error) {
+    console.log("error during saving custom prompt ", error.response);
+    return {
+      error: error.response?.data || {
+        message: "An error occurred during saving custom prompt data.",
+      },
+      success: false,
+    };
+  }
+};

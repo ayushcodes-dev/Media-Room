@@ -11,6 +11,9 @@ import {
   Share2,
   MoreVertical,
   Trash2,
+  Download,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import GlassCard from "@/component/cards/glassCard";
@@ -19,14 +22,17 @@ import Button1 from "@/component/button/button1.jsx";
 import copyToClipboard from "@/utility/copyToClipboard.js";
 import Toaster1 from "@/component/toaster/toaster1.jsx";
 import generateSEOData from "@/features/generate/seoData.generate.js";
+import generateThumbnail from "@/features/generate/thumbnail.generate.js";
 import projectStatusContext from "@/context/projectStatus.js";
 import projectContext from "@/context/project.js";
 import getProjectByID from "@/features/project/get.project.js";
 import deleteProject from "@/features/project/delete.project.js";
 import SEODataChooser from "@/component/utility/seoDataChooser.jsx";
+import ThumbnailChooser from "@/component/utility/thumbnailChooser.jsx";
 import ProjectNotFound from "@/component/notFound/ProjectNotFound.jsx";
 import SeoDataSkeleton from "@/component/loader/seoDataSkeleton.jsx";
 import DeleteConfirmModal from "@/component/cards/deleteConfirmModal.jsx";
+import BillingErrorModal from "@/component/cards/billingErrorModal.jsx";
 // ==========================================
 // MOCK DATA & CONSTANTS
 // ==========================================
@@ -73,9 +79,16 @@ export default function App() {
   const [projectNotFound, setProjectNotFound] = useState(false);
   const { projectData, setProjectData } = useContext(projectContext);
   const [seoButtonDisable, setSeoButtonDisable] = useState(true);
+  const [thumbnailButtonDisable, setThumbnailButtonDisable] = useState(false);
   const [currentProjectData, setCurrentProjectData] = useState(null);
 
   const [activeSEOData, setActiveSEOData] = useState(0);
+  const [activeThumbnail, setActiveThumbnail] = useState(0);
+  const [billingErrorModalData, setBillingErrorModalData] = useState({
+    isOpen: false,
+    errorCode: "",
+    message: "",
+  });
 
   const resolvedVideoDesc =
     videoDesc || currentProjectData?.videoDescription || "";
@@ -110,6 +123,9 @@ export default function App() {
       setCurrentProjectData({ ...project });
       setVideoDesc(
         project.videoDescription ? project.videoDescription : videoDesc,
+      );
+      setCustomPrompt(
+        project.customPrompt ? project.customPrompt : customPrompt,
       );
       setSeoButtonDisable(true);
       // setProjectNotFound(false);
@@ -311,39 +327,23 @@ export default function App() {
                 <div className="grid lg:grid-cols-2  w-full gap-6">
                   <TextArea
                     label="Video Description"
-                    icon="Icon"
+                    Icon={FileText}
                     type="text"
                     placeholder="describe your video"
-                    id="video desc"
-                    autoComplete="video description"
+                    id="video-desc"
+                    autoComplete="video-description"
                     state={videoDesc}
                     setState={setVideoDesc}
-                    value={videoDesc}
-                    onChange={(e) => {
-                      setVideoDesc(
-                        e.target.currentValue
-                          ? e.target.currentValue
-                          : videoDesc,
-                      );
-                    }}
                   />
                   <TextArea
                     label="Custom Thumbnail Prompt (optional)"
-                    icon="Icon"
+                    Icon={Sparkles}
                     type="text"
-                    placeholder="add custom thumbanil prompt"
-                    id="video desc"
-                    autoComplete="video description"
+                    placeholder="add custom thumbnail prompt"
+                    id="custom-prompt"
+                    autoComplete="custom-prompt"
                     state={customPrompt}
                     setState={setCustomPrompt}
-                    value={customPrompt}
-                    onChange={(e) => {
-                      setVideoDesc(
-                        e.target.currentValue
-                          ? e.target.currentValue
-                          : videoDesc,
-                      );
-                    }}
                   />
                 </div>
                 <div className="grid lg:grid-cols-2  w-full  gap-10 my-5 ">
@@ -361,21 +361,40 @@ export default function App() {
                           setProjectData,
                           setSeoButtonDisable,
                           setActiveSEOData,
+                          setBillingErrorModalData,
                         },
                       );
                     }}
                   >
                     <div> Generate SEO Data </div>
                     <div>
-                      <p>( 5 credit )</p>
+                       <p>( 5 credit )</p>
                     </div>
                   </Button1>
                   <Button1
                     className="w-full lg:w-[80%] mx-auto flex gap-20 "
                     variant="primary"
-                    //   disabled={true}
+                    disabled={thumbnailButtonDisable}
+                    onClick={() => {
+                      generateThumbnail(
+                        {
+                          projectID,
+                          customPrompt,
+                          videoDescription: resolvedVideoDesc,
+                        },
+                        {
+                          setToasterData,
+                          setProjectData,
+                          setThumbnailButtonDisable,
+                          setprojectStatus,
+                          setActiveThumbnail,
+                          setBillingErrorModalData,
+                          currentProjectData,
+                        },
+                      );
+                    }}
                   >
-                    <div> Generate Thumbnail</div>
+                    <div>{thumbnailButtonDisable ? "Generating..." : "Generate Thumbnail"}</div>
                     <div>
                       <p>( 20 credit )</p>
                     </div>
@@ -563,89 +582,218 @@ export default function App() {
 
                       {/* VISUAL ASSET PREVIEW COLUMN */}
                       <div className="lg:col-span-2">
-                        <GlassCard
-                          hoverEffect={false}
-                          className="space-y-5 flex flex-col justify-between h-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-                        >
-                          <div className="space-y-5">
-                            <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
-                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                                Thumbnail Preview
-                              </span>
-                              {/* <div className="flex gap-2 lg:text-lg md:text-md text-xs">
-                              <p className="text-white/80">status :</p>
-                              <p className="text-white/50 tracking-wider">
-                                generating...
-                              </p>
-                            </div> */}
-                            </div>
+                        {(() => {
+                          const thumbnailsList =
+                            Array.isArray(currentProjectData?.thumbnails) &&
+                            currentProjectData.thumbnails.length > 0
+                              ? currentProjectData.thumbnails
+                              : currentProjectData?.thumbnail
+                              ? [
+                                  {
+                                    thumbnailURL: currentProjectData.thumbnail,
+                                    prompt: currentProjectData.imagePrompt,
+                                  },
+                                ]
+                              : [];
 
-                            {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
-                            <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl">
-                              {/* {selectedProject.thumbnail ? (
-                              <>
-                                <img
-                                  src={selectedProject.thumbnail}
-                                  alt="Generated Preview Thumbnail"
-                                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                                />
-                                <div className="absolute top-3 right-3 bg-slate-950/90 backdrop-blur-md border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[8px] text-emerald-400 font-extrabold uppercase tracking-widest shadow-[0_0_8px_rgba(16,185,129,0.2)]">
-                                  Ready
+                          const currentActiveIndex = Math.min(
+                            activeThumbnail,
+                            Math.max(0, thumbnailsList.length - 1),
+                          );
+                          const activeThumbItem = thumbnailsList[currentActiveIndex];
+                          const activeThumbURL =
+                            (typeof activeThumbItem === "string"
+                              ? activeThumbItem
+                              : activeThumbItem?.thumbnailURL) ||
+                            currentProjectData?.thumbnail;
+                          const activeThumbPrompt =
+                            (typeof activeThumbItem === "object" &&
+                            activeThumbItem?.prompt
+                              ? activeThumbItem.prompt
+                              : null) ||
+                            currentProjectData?.imagePrompt ||
+                            currentProjectData?.seoData?.[activeSEOData]
+                              ?.thumbnailDescription ||
+                            currentProjectData?.customPrompt ||
+                            "Not generated yet";
+
+                          return (
+                            <GlassCard
+                              hoverEffect={false}
+                              className="space-y-5 flex flex-col justify-between h-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                            >
+                              <div className="space-y-5">
+                                <div className="border-b border-slate-900 pb-3 flex items-center justify-between">
+                                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                    <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
+                                    Thumbnail Preview
+                                  </span>
+                                  {thumbnailButtonDisable ? (
+                                    <span className="flex items-center gap-1.5 text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest animate-pulse">
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                      Generating...
+                                    </span>
+                                  ) : activeThumbURL ? (
+                                    <div className="flex items-center gap-2">
+                                      {thumbnailsList.length > 1 && (
+                                        <span className="text-[9px] text-sky-400 font-bold bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md">
+                                          {currentActiveIndex + 1} of {thumbnailsList.length}
+                                        </span>
+                                      )}
+                                      <span className="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                                        Ready
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="flex items-center gap-1.5 text-slate-400 bg-slate-500/10 border border-slate-500/20 px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase tracking-widest">
+                                      Draft
+                                    </span>
+                                  )}
                                 </div>
-                              </>
-                            ) : (
-                              <div className="text-center p-6 space-y-2">
-                                <ImageIcon className="w-8 h-8 text-slate-700 mx-auto animate-pulse" />
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                  Not Generated
-                                </p>
-                                <p className="text-[9px] text-slate-600 max-w-[200px]">
-                                  Thumbnail canvas prompt is available to feed
-                                  into image generators.
-                                </p>
-                              </div>
-                            )} */}
-                            </div>
 
-                            {/* PROMPT SCRIPT PROJECTION */}
-                            <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
-                              <div className="flex items-center justify-between mb-2.5">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                                  AI Thumbnail Prompt
+                                {/* RENDER FALLBACK LOGIC WITH SHARP GLOSSY BORDERS */}
+                                <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-950/80 border border-slate-800 flex items-center justify-center shadow-2xl group">
+                                  {thumbnailButtonDisable ? (
+                                    <div className="flex flex-col items-center justify-center space-y-3 p-6 text-center">
+                                      <div className="relative">
+                                        <div className="w-12 h-12 rounded-full border-2 border-sky-500/20 border-t-sky-400 animate-spin" />
+                                        <Sparkles className="w-5 h-5 text-sky-400 absolute inset-0 m-auto animate-pulse" />
+                                      </div>
+                                      <div>
+                                        <p className="text-xs font-bold text-sky-300 uppercase tracking-wider">
+                                          Generating AI Thumbnail
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 mt-1">
+                                          Crafting high-CTR visual with FLUX.1...
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : activeThumbURL ? (
+                                    <>
+                                      <img
+                                        src={activeThumbURL}
+                                        alt={`Generated Preview Thumbnail ${currentActiveIndex + 1}`}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-4">
+                                        <span className="text-[10px] font-mono text-slate-300 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-md border border-slate-700">
+                                          16:9 HD
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => {
+                                              copyToClipboard(activeThumbURL);
+                                              setToasterData((prev) => [
+                                                ...prev,
+                                                {
+                                                  id: `copy_${Date.now()}`,
+                                                  status: "success",
+                                                  info: "Thumbnail URL copied to clipboard!",
+                                                  duration: 3000,
+                                                },
+                                              ]);
+                                            }}
+                                            className="p-2 rounded-xl bg-slate-900/90 hover:bg-sky-500/20 text-slate-300 hover:text-sky-300 border border-slate-700 hover:border-sky-500/40 transition-all shadow-md active:scale-95 cursor-pointer"
+                                            title="Copy Image URL"
+                                          >
+                                            <Copy className="w-3.5 h-3.5" />
+                                          </button>
+                                          <a
+                                            href={activeThumbURL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 rounded-xl bg-slate-900/90 hover:bg-sky-500/20 text-slate-300 hover:text-sky-300 border border-slate-700 hover:border-sky-500/40 transition-all shadow-md active:scale-95 cursor-pointer"
+                                            title="Open Full Size Image"
+                                          >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                          </a>
+                                          <a
+                                            href={activeThumbURL}
+                                            download={`thumbnail_${projectID}_${currentActiveIndex + 1}.png`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold transition-all shadow-lg active:scale-95 flex items-center gap-1 text-[10px] cursor-pointer"
+                                            title="Download Thumbnail"
+                                          >
+                                            <Download className="w-3.5 h-3.5" />
+                                            <span>Download</span>
+                                          </a>
+                                        </div>
+                                      </div>
+                                      <div className="absolute top-3 right-3 bg-slate-950/90 backdrop-blur-md border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[8px] text-emerald-400 font-extrabold uppercase tracking-widest shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                                        Ready
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="text-center p-6 space-y-2">
+                                      <ImageIcon className="w-8 h-8 text-slate-700 mx-auto animate-pulse" />
+                                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        Not Generated
+                                      </p>
+                                      <p className="text-[9px] text-slate-600 max-w-[220px]">
+                                        Click "Generate Thumbnail" above to create an AI-powered high-CTR thumbnail.
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* THUMBNAIL MULTI-IMAGE CHOOSER */}
+                                {thumbnailsList.length > 1 && (
+                                  <div className="pt-1">
+                                    <ThumbnailChooser
+                                      items={thumbnailsList}
+                                      activeIndex={currentActiveIndex}
+                                      onChange={setActiveThumbnail}
+                                    />
+                                  </div>
+                                )}
+
+                                {/* PROMPT SCRIPT PROJECTION */}
+                                <div className="group relative bg-slate-950/50 border border-slate-800 rounded-xl p-5 transition-all duration-300 hover:border-slate-400 shadow-inner">
+                                  <div className="flex items-center justify-between mb-2.5">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                                      AI Thumbnail Prompt {thumbnailsList.length > 1 ? `(Image ${currentActiveIndex + 1})` : ""}
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        copyToClipboard(activeThumbPrompt);
+                                        if (activeThumbPrompt) {
+                                          setToasterData((prev) => [
+                                            ...prev,
+                                            {
+                                              id: `copy_${Date.now()}`,
+                                              status: "success",
+                                              info: "Prompt copied to clipboard!",
+                                              duration: 3000,
+                                            },
+                                          ]);
+                                        }
+                                      }}
+                                      className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)] cursor-pointer"
+                                      title="Copy Prompt"
+                                    >
+                                      <Copy className="w-3 h-3" />
+                                      Copy
+                                    </button>
+                                  </div>
+                                  <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
+                                    {activeThumbPrompt}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center">
+                                <span>Aspect Ratio: 16:9</span>
+                                <span>
+                                  {activeThumbURL
+                                    ? `HD Preview Ready (${thumbnailsList.length} total)`
+                                    : "Awaiting Generation"}
                                 </span>
-                                <button
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      currentProjectData?.seoData[activeSEOData]
-                                        ? currentProjectData.seoData[
-                                            activeSEOData
-                                          ].thumbnailDescription
-                                        : "",
-                                      "Thumbnail Prompt",
-                                    )
-                                  }
-                                  className="text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 active:scale-95 flex items-center gap-1.5 border border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]"
-                                  title="Copy Prompt"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                  Copy
-                                </button>
                               </div>
-                              <p className="text-xs text-sky-100 italic leading-relaxed pr-6 select-all">
-                                {currentProjectData?.seoData[activeSEOData]
-                                  ? currentProjectData.seoData[activeSEOData]
-                                      .thumbnailDescription
-                                  : "not available"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="pt-4 border-t border-slate-900 text-[10px] text-slate-500 flex justify-between items-center">
-                            <span>Aspect Ratio: 16:9</span>
-                            <span>HD Preview ready</span>
-                          </div>
-                        </GlassCard>
+                            </GlassCard>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
@@ -654,6 +802,17 @@ export default function App() {
             </div>
           </main>
         </div>
+        <BillingErrorModal
+          isOpen={billingErrorModalData.isOpen}
+          errorInfo={billingErrorModalData}
+          onClose={() =>
+            setBillingErrorModalData({
+              isOpen: false,
+              errorCode: "",
+              message: "",
+            })
+          }
+        />
       </SubPage>
     </Protect>
   );

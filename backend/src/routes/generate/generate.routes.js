@@ -1,14 +1,18 @@
-import express from "express"
-import generateContent from "#/features/content/index.content.js"
-import {handleUserAuth_middle} from "#/middleware/auth.middleware.js"
-import { generateSeoDataValidator } from "#/validator/generate.validator.js";
+import express from "express";
+import generateContent from "#/features/content/index.content.js";
+import generateThumbnail from "#/features/thumbnail/index.thumbnail.js"
+import { handleUserAuth_middle } from "#/middleware/auth.middleware.js";
+import {
+  generateSeoDataValidator,
+  generateThumbnailValidator,
+} from "#/validator/generate.validator.js";
 import validate from "#/validator/index.validate.js";
-import HandleUsage from "#/middleware/usage.middleware.js"
+import HandleUsage from "#/middleware/usage.middleware.js";
+
 const router = express.Router();
 
-
 /**
- * @route   GET /generate/content
+ * @route   POST /generate/seoData
  * @desc    generates content like tags, title, and description 
  * @access  private
  */
@@ -22,22 +26,42 @@ router.post(
     const content = await generateContent(req, {
       projectID: req.body.projectID,
       videoDescription: req.body.videoDescription,
-      customThumbnailPrompt: req.body.customThumbnailPrompt,
     });
     res.success({ ...content });
   },
 );
 
-
 /**
- * @route   GET /generate/thumbnail
+ * @route   POST /generate/thumbnail
  * @desc    generates thumbnail image for the video
  * @access  private
  */
-router.get('/generate/thumbnail',handleUserAuth_middle,HandleUsage, async (req, res) => {
-  const userInp= `my vedieo is about web dev roadmap ensures that it is not old and future proof I suggest them to learn mern for next step learn nextjs I told every parts in  detail whatlearner have to do`
-  const content= await generateContent(userInp)
-  res.success({message:"content generated", content:content});
-});
+router.post(
+  "/generate/thumbnail",
+  handleUserAuth_middle,
+  generateThumbnailValidator,
+  validate,
+  HandleUsage,
+  async (req, res) => {
+    console.log("req on generate thumbnail")
+    const customPrompt =
+      req.body.customPrompt ||
+      req.body.customThumbnailPrompt ||
+      req.body.customprompt ||
+      "";
+    const desc = req.body.description || req.body.videoDescription || "";
+    const projectID = req.body.projectID;
+    const thumbnail = await generateThumbnail(req, {
+      projectID,
+      customPrompt,
+      description: desc,
+    });
+    if (thumbnail.success) {
+      return res.success({ ...thumbnail });
+    } else {
+      return res.error({ ...thumbnail });
+    }
+  },
+);
 
-export default router
+export default router;
